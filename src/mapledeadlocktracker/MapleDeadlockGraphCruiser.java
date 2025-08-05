@@ -34,14 +34,14 @@ public class MapleDeadlockGraphCruiser {
     
     private final static MapleDeadlockGraphCruiser instance = new MapleDeadlockGraphCruiser();
 
-    private class MapleDeadlockObject {
+    private class MapleDeadlockItem {
         
         Integer lockId1;
         Integer lockId2;
         MapleDeadlockFunction f1;
         MapleDeadlockFunction f2;
         
-        private MapleDeadlockObject(Integer lockId1, Integer lockId2, MapleDeadlockFunction f1, MapleDeadlockFunction f2) {
+        private MapleDeadlockItem(Integer lockId1, Integer lockId2, MapleDeadlockFunction f1, MapleDeadlockFunction f2) {
             this.lockId1 = lockId1;
             this.lockId2 = lockId2;
             this.f1 = f1;
@@ -70,7 +70,7 @@ public class MapleDeadlockGraphCruiser {
         
     }
     
-    static Set<MapleDeadlockObject> deadlocks = new HashSet<>();
+    static Set<MapleDeadlockItem> deadlocks = new HashSet<>();
     
     static Stack<MapleDeadlockFunction> functionStack = new Stack<>();
     static Map<MapleDeadlockFunction, FunctionPathNode> functionLocks = new HashMap<>();
@@ -84,19 +84,21 @@ public class MapleDeadlockGraphCruiser {
     }
     
     private static void commitFunctionAcquiredLocks(MapleDeadlockFunction f, FunctionPathNode trace, FunctionPathNode uptrace) {
-        Set<Integer> ongoingLocks = trace.acquiredLocks;
-        Set<Integer> locks = functionLocks.get(f).acquiredLocks;
-        List<Integer> acqLocks = functionLocks.get(f).seqAcqLocks;
-        
-        if (acqLocks.size() < trace.seqAcqLocks.size()) {
-            locks.clear();
-            locks.addAll(ongoingLocks);
-            
-            acqLocks.clear();
-            acqLocks.addAll(trace.seqLocks);
+        if (functionLocks.get(f) != null) {
+            Set<Integer> ongoingLocks = trace.acquiredLocks;
+            Set<Integer> locks = functionLocks.get(f).acquiredLocks;
+            List<Integer> acqLocks = functionLocks.get(f).seqAcqLocks;
+
+            if (acqLocks.size() < trace.seqAcqLocks.size()) {
+                locks.clear();
+                locks.addAll(ongoingLocks);
+
+                acqLocks.clear();
+                acqLocks.addAll(trace.seqLocks);
+            }    
         }
         
-        uptrace.seqLocks = uptrace.seqLocks.subList(0, trace.seqLocks.size());
+        uptrace.seqLocks = uptrace.seqLocks.subList(0, Math.min(uptrace.seqLocks.size(), trace.seqLocks.size()));
     }
     
     private static void sourceGraphFunctionLock(MapleDeadlockFunction f, int lockId, Map<MapleDeadlockFunction, MapleDeadlockGraphMethod> g, FunctionPathNode ongoingLocks) {
@@ -258,7 +260,7 @@ public class MapleDeadlockGraphCruiser {
                     if (detectDeadlocksInLockSequence(ek, e.getValue(), f.getKey(), f.getValue())) {
                         for (MapleDeadlockFunction m : lockFunctions.get(ek)) {
                             for (MapleDeadlockFunction n : lockFunctions.get(f.getKey())) {
-                                deadlocks.add(new MapleDeadlockObject(ek, f.getKey(), m, n));
+                                deadlocks.add(new MapleDeadlockItem(ek, f.getKey(), m, n));
                             }
                         }
                     }

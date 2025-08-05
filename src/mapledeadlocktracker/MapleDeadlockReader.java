@@ -970,7 +970,6 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
             String className = pc.substring(idx + 1);
             
             MapleDeadlockClass mdc = maplePublicPackages.get(packName).get(className);
-            if(mdc == null) System.out.println("COULD NOT FIND COMMON CLASS " + className + " @ " + packName);
             
             for(MapleDeadlockClass c : e.getValue().values()) {
                 for(Pair<String, MapleDeadlockClass> s: mdc.getImports()) {

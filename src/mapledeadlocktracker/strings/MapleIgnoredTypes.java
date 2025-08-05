@@ -26,6 +26,7 @@ public class MapleIgnoredTypes {
         // ------ common data types ----------
         
         ignored.add("java");
+        ignored.add("Object");
         ignored.add("Iterator");
         
         ignored.add("Throwable");
