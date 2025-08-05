@@ -120,6 +120,8 @@ public class MapleDeadlockGraphCruiser {
         while (functionStack.size() > curBaseIdx) {
             MapleDeadlockFunction mdf = functionStack.pop();
             if (!functionStack.contains(mdf)) {
+                functionStack.add(f);
+                
                 FunctionPathNode ftrace = new FunctionPathNode();
                 ftrace.seqLocks.addAll(uptrace.seqLocks);
 
@@ -142,6 +144,7 @@ public class MapleDeadlockGraphCruiser {
                 }
 
                 commitFunctionAcquiredLocks(f, ftrace, uptrace);
+                functionStack.pop();
             }
         }
     }

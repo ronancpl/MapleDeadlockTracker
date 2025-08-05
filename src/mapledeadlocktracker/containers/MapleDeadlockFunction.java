@@ -33,6 +33,7 @@ public class MapleDeadlockFunction {
     
     String name;
     boolean isAbstract;
+    boolean isEllipsis = false;
     
     MapleDeadlockClass source;
     MapleDeadlockFunction parent;
@@ -74,6 +75,14 @@ public class MapleDeadlockFunction {
     
     public boolean isAbstract() {
         return isAbstract;
+    }
+    
+    public void setEllipsis(boolean e) {
+        this.isEllipsis = e;
+    }
+    
+    public boolean isEllipsis() {
+        return this.isEllipsis;
     }
     
     public void addLockEntry(MapleDeadlockLock lock) {
@@ -237,7 +246,7 @@ public class MapleDeadlockFunction {
     }
     
     public boolean hasSimilarHeading(String functName, List<Integer> params) {
-        if(name.contentEquals(functName) && params.size() == paramTypes.size()) {
+        if(name.contentEquals(functName) && (params.size() == paramTypes.size() || (this.isEllipsis() && params.size() >= paramTypes.size()))) {
             Set<Integer> mTypes = source.getMaskedTypeSet();
             
             for(int i = 0; i < params.size(); i++) {

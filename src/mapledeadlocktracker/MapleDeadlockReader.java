@@ -648,6 +648,8 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                 
                 Long val = method.addLocalVariable(typeId, lfp.variableDeclaratorId().IDENTIFIER().getText());
                 params.put(val, typeId);
+                
+                method.setEllipsis(true);
             }
         }
         
