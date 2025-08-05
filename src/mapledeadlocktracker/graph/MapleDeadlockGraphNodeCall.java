@@ -19,7 +19,7 @@ public class MapleDeadlockGraphNodeCall extends MapleDeadlockGraphNode {
     Integer callFid;
     
     public MapleDeadlockGraphNodeCall(Integer fid) {
-        super(-1, MapleDeadlockGraphNodeType.CALL);
+        super(fid, MapleDeadlockGraphNodeType.CALL);
         callFid = fid;
     }
     

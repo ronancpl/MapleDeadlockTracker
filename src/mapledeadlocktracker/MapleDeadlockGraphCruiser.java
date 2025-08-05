@@ -58,6 +58,9 @@ public class MapleDeadlockGraphCruiser {
     static Set<MapleDeadlockEntry> deadlocks = new HashSet<>();
     
     static Stack<MapleDeadlockFunction> functionStack = new Stack<>();
+    static Map<MapleDeadlockFunction, Integer> functionMap = new HashMap<>();
+    static Map<MapleDeadlockFunction, Set<Integer>> functionMilestones = new HashMap<>();
+    
     static Map<MapleDeadlockFunction, FunctionPathNode> functionLocks = new HashMap<>();
     static Map<Integer, Set<MapleDeadlockFunction>> lockFunctions = new HashMap<>();
     
@@ -100,39 +103,65 @@ public class MapleDeadlockGraphCruiser {
         ongoingLocks.seqAcqLocks.add(-lockId); // represents unlock in a lane graph
     }
     
+    private static void insertGraphFunction(MapleDeadlockFunction f) {
+        Integer i = functionMap.get(f);
+        if (i == null) functionMap.put(f, 1);
+        else functionMap.put(f, i + 1);
+    }
+    
+    private static void removeGraphFunction(MapleDeadlockFunction f) {
+        Integer i = functionMap.get(f);
+        if (i == 1) functionMap.remove(f);
+        else functionMap.put(f, i - 1);
+    }
+    
     private void runSourceGraphFunction(MapleDeadlockFunction f, Map<MapleDeadlockFunction, MapleDeadlockGraphMethod> g, FunctionPathNode uptrace) {
-        int curBaseIdx = functionStack.size();
-        functionStack.add(f);
+        Set<Integer> s = functionMilestones.get(f);
+        int size = s.size();
+        s.addAll(uptrace.acquiredLocks);
         
-        while (functionStack.size() > curBaseIdx) {
-            MapleDeadlockFunction mdf = functionStack.pop();
-            if (!functionStack.contains(mdf)) {
-                functionStack.add(f);
-                
-                FunctionPathNode ftrace = new FunctionPathNode();
-                ftrace.seqLocks.addAll(uptrace.seqLocks);
+        if (size < s.size()) {
+            int curBaseIdx = functionStack.size();
+            functionStack.add(f);
+            
+            while (functionStack.size() > curBaseIdx) {
+                MapleDeadlockFunction mdf = functionStack.pop();
+                if (!functionMap.containsKey(mdf)) {
+                    functionStack.add(mdf);
+                    insertGraphFunction(mdf);
 
-                for (MapleDeadlockGraphEntry e : g.get(mdf).getEntryList()) {
-                    for (MapleDeadlockGraphNode n : e.getGraphEntryPoints()) {
-                        switch(n.getType()) {
-                            case CALL:
-                                runSourceGraphFunction(mdf, g, ftrace);
-                                break;
+                    FunctionPathNode ftrace = new FunctionPathNode();
+                    ftrace.seqLocks.addAll(uptrace.seqLocks);
 
-                            case LOCK:
-                                sourceGraphFunctionLock(n.getValue(), ftrace);
-                                break;
+                    for (MapleDeadlockGraphEntry e : g.get(mdf).getEntryList()) {
+                        for (MapleDeadlockGraphNode n : e.getGraphEntryPoints()) {
+                            switch (n.getType()) {
+                                case CALL:
+                                    runSourceGraphFunction(functions.get(n.getValue()), g, ftrace);
+                                    break;
 
-                            case UNLOCK:
-                                sourceGraphFunctionUnlock(n.getValue(), ftrace);
-                                break;
+                                case LOCK:
+                                    sourceGraphFunctionLock(n.getValue(), ftrace);
+                                    break;
+
+                                case UNLOCK:
+                                    sourceGraphFunctionUnlock(n.getValue(), ftrace);
+                                    break;
+                            }
                         }
                     }
-                }
 
-                commitFunctionAcquiredLocks(f, ftrace, uptrace);
-                functionStack.pop();
+                    commitFunctionAcquiredLocks(mdf, ftrace, uptrace);
+                    removeGraphFunction(mdf);
+                    functionStack.pop();
+                }
             }
+        }
+    }
+    
+    private static void prepareFunctionMilestones() {
+        for (Entry<Integer, MapleDeadlockFunction> f : functions.entrySet()) {
+            functionMilestones.put(f.getValue(), new HashSet<>(5));
         }
     }
     
@@ -143,10 +172,13 @@ public class MapleDeadlockGraphCruiser {
     }
     
     private void findFunctionLocks(MapleDeadlockGraph graph) {
+        prepareFunctionMilestones();
+        
         Map<MapleDeadlockFunction, MapleDeadlockGraphMethod> functionGraph = graph.getFunctionGraph();
         for (Entry<MapleDeadlockFunction, MapleDeadlockGraphMethod> e : functionGraph.entrySet()) {
             MapleDeadlockFunction f = e.getKey();
             if (isStartingFunction(f)) {
+                //System.out.println("Reading " + MapleDeadlockStorage.getCanonClassName(f.getSourceClass()) + " >> " + f.getName());
                 FunctionPathNode trace = new FunctionPathNode();
                 runSourceGraphFunction(f, functionGraph, trace);
             }
