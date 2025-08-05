@@ -1,3 +1,10 @@
+# Netbeans project files
+dist/
+build/
+build.xml
+manifest.mf
+nbproject/
+
 # Compiled class file
 *.class
 

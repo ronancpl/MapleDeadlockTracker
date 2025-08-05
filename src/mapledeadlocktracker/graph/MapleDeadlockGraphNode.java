@@ -1,0 +1,35 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package mapledeadlocktracker.graph;
+
+/**
+ *
+ * @author RonanLana
+ */
+    
+public class MapleDeadlockGraphNode {
+    int position;
+    MapleDeadlockGraphNodeType type;
+    
+    protected MapleDeadlockGraphNode(int pos, MapleDeadlockGraphNodeType t) {
+        position = pos;
+        type = t;
+    }
+    
+    public MapleDeadlockGraphNode() {
+        position = -1;
+        type = MapleDeadlockGraphNodeType.END;
+    }
+    
+    public MapleDeadlockGraphNodeType getType() {
+        return type;
+    }
+    
+    public int getValue() {
+        return position;
+    }
+    
+}
