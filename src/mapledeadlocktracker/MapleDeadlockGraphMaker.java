@@ -152,6 +152,8 @@ public class MapleDeadlockGraphMaker {
     private static void createGraphFunction(MapleDeadlockFunction mdf) {
         mapleGraphFunctionIds.put(mdf, runningFid);
         mapleGraphFunctions.put(mdf, new MapleDeadlockGraphMethod(runningFid, MapleDeadlockStorage.getCanonClassName(mdf.getSourceClass()) + " >> " + mdf.getName()));
+        mdf.setId(runningFid);
+        
         runningFid++;
     }
     
@@ -681,7 +683,7 @@ public class MapleDeadlockGraphMaker {
     private static Integer parseMethodCalls(MapleDeadlockGraphMethod node, JavaParser.ExpressionContext call, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass, boolean filter) {
         JavaParser.ExpressionContext curCtx = call;
 
-        if(call.getText().contentEquals("(MapleMapItem)mapobj")) {
+        if(call.getText().contains("answerInvite")) {
             int io = 1;
         }
         

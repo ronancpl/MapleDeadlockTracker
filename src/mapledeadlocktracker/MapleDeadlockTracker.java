@@ -24,12 +24,14 @@ import mapledeadlocktracker.containers.MapleDeadlockStorage;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
 import javalexer.*;
 import javaparser.*;
+import mapledeadlocktracker.containers.MapleDeadlockEntry;
 
 /**
  *
@@ -96,7 +98,8 @@ public class MapleDeadlockTracker {
         MapleDeadlockGraph mdg = MapleDeadlockGraphMaker.generateSourceGraph(md);
         System.out.println("Project graph generated!\n");
         
-        new MapleDeadlockGraphCruiser().runSourceGraph(mdg);
+        Set<MapleDeadlockEntry> mds = new MapleDeadlockGraphCruiser().runSourceGraph(mdg);
+        MapleDeadlockGraphResult.reportDeadlocks(mds);
         
         /*
         MapleDeadlockGraphMaker.dumpGraph();

@@ -31,6 +31,7 @@ public class MapleDeadlockFunction {
     static Pair<Integer, Integer> ignoredRange;
     static Integer intType;
     
+    int id;
     String name;
     boolean isAbstract;
     boolean isEllipsis = false;
@@ -164,6 +165,14 @@ public class MapleDeadlockFunction {
     
     public String getName() {
         return name;
+    }
+    
+    public int getId() {
+        return id;
+    }
+    
+    public void setId(int id) {
+        this.id = id;
     }
     
     private static Integer getElementalTypeOf(Integer type) {

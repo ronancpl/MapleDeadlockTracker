@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
+import mapledeadlocktracker.containers.MapleDeadlockEntry;
 import mapledeadlocktracker.containers.MapleDeadlockFunction;
 import mapledeadlocktracker.containers.MapleDeadlockStorage;
 import mapledeadlocktracker.graph.MapleDeadlockGraphEntry;
@@ -33,22 +34,6 @@ import mapledeadlocktracker.graph.MapleDeadlockGraphNode;
 public class MapleDeadlockGraphCruiser {
     
     private final static MapleDeadlockGraphCruiser instance = new MapleDeadlockGraphCruiser();
-
-    private class MapleDeadlockItem {
-        
-        Integer lockId1;
-        Integer lockId2;
-        MapleDeadlockFunction f1;
-        MapleDeadlockFunction f2;
-        
-        private MapleDeadlockItem(Integer lockId1, Integer lockId2, MapleDeadlockFunction f1, MapleDeadlockFunction f2) {
-            this.lockId1 = lockId1;
-            this.lockId2 = lockId2;
-            this.f1 = f1;
-            this.f2 = f2;
-        }
-        
-    }
     
     private class FunctionPathNode {
         
@@ -70,7 +55,7 @@ public class MapleDeadlockGraphCruiser {
         
     }
     
-    static Set<MapleDeadlockItem> deadlocks = new HashSet<>();
+    static Set<MapleDeadlockEntry> deadlocks = new HashSet<>();
     
     static Stack<MapleDeadlockFunction> functionStack = new Stack<>();
     static Map<MapleDeadlockFunction, FunctionPathNode> functionLocks = new HashMap<>();
@@ -101,14 +86,14 @@ public class MapleDeadlockGraphCruiser {
         uptrace.seqLocks = uptrace.seqLocks.subList(0, Math.min(uptrace.seqLocks.size(), trace.seqLocks.size()));
     }
     
-    private static void sourceGraphFunctionLock(MapleDeadlockFunction f, int lockId, Map<MapleDeadlockFunction, MapleDeadlockGraphMethod> g, FunctionPathNode ongoingLocks) {
+    private static void sourceGraphFunctionLock(int lockId, FunctionPathNode ongoingLocks) {
         List<Integer> list = ongoingLocks.seqLocks;
         
         list.add(lockId);
         ongoingLocks.acquiredLocks.add(lockId);
     }
     
-    private static void sourceGraphFunctionUnlock(MapleDeadlockFunction f, int lockId, Map<MapleDeadlockFunction, MapleDeadlockGraphMethod> g, FunctionPathNode ongoingLocks) {
+    private static void sourceGraphFunctionUnlock(int lockId, FunctionPathNode ongoingLocks) {
         List<Integer> list = ongoingLocks.seqLocks;
         list.remove(list.lastIndexOf(lockId));
         
@@ -135,11 +120,11 @@ public class MapleDeadlockGraphCruiser {
                                 break;
 
                             case LOCK:
-                                sourceGraphFunctionLock(f, n.getValue(), g, ftrace);
+                                sourceGraphFunctionLock(n.getValue(), ftrace);
                                 break;
 
                             case UNLOCK:
-                                sourceGraphFunctionUnlock(f, n.getValue(), g, ftrace);
+                                sourceGraphFunctionUnlock(n.getValue(), ftrace);
                                 break;
                         }
                     }
@@ -260,7 +245,7 @@ public class MapleDeadlockGraphCruiser {
                     if (detectDeadlocksInLockSequence(ek, e.getValue(), f.getKey(), f.getValue())) {
                         for (MapleDeadlockFunction m : lockFunctions.get(ek)) {
                             for (MapleDeadlockFunction n : lockFunctions.get(f.getKey())) {
-                                deadlocks.add(new MapleDeadlockItem(ek, f.getKey(), m, n));
+                                deadlocks.add(new MapleDeadlockEntry(ek, f.getKey(), m, n));
                             }
                         }
                     }
@@ -275,9 +260,11 @@ public class MapleDeadlockGraphCruiser {
         detectDeadlocksInLockDependencies();
     }
     
-    public void runSourceGraph(MapleDeadlockGraph graph) {
+    public Set<MapleDeadlockEntry> runSourceGraph(MapleDeadlockGraph graph) {
         makeRemissiveIndexFunctions(graph);
         findFunctionLocks(graph);
+        
         detectDeadlocks();
+        return deadlocks;
     }
 }
