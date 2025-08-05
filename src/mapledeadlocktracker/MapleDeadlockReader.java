@@ -1,5 +1,5 @@
 /*
-    This file is part of the MapleQuestAdvisor planning tool
+    This file is part of the MapleDeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
