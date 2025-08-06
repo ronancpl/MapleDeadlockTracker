@@ -42,6 +42,8 @@ public class MapleDeadlockGraphMaker {
     private static Map<String, Map<String, MapleDeadlockClass>> maplePublicPackages;
     private static Map<String, Map<String, MapleDeadlockClass>> maplePrivateClasses;
     private static Map<String, MapleDeadlockLock> mapleLocks;
+    
+    private static Integer objectSetId;
     private static Map<Integer, Integer> mapleElementalDataTypes;
     private static Integer[] mapleElementalTypes;
     private static Set<Integer> mapleEnumDataTypes;
@@ -62,6 +64,7 @@ public class MapleDeadlockGraphMaker {
     private static Map<Integer, Integer> mapleDereferencedDataTypes = new HashMap<>();
     
     private static Map<Integer, String> mapleEveryDataTypes = new HashMap<>();
+    private static Map<String, Integer> mapleEveryDataTypeIds = new HashMap<>();
     
     private static Map<Integer, Set<Integer>> mapleSuperClasses = new HashMap<>();
     private static Map<Integer, Integer> mapleDataWrapper = new HashMap<>();
@@ -117,9 +120,13 @@ public class MapleDeadlockGraphMaker {
     
     private static Integer evaluateAbstractFunction(String methodName, List<Integer> argTypes, Integer dataType, MapleDeadlockAbstractType absType, MapleDeadlockGraphMethod node) {
         switch(absType) {
+            case MAP:
+                if(methodName.contentEquals("entrySet")) {
+                    return objectSetId;
+                }
+                
             case SET:
             case LIST:
-            case MAP:
             case STACK:
             case PRIORITYQUEUE:
                 if(methodName.contentEquals("size")) return mapleElementalTypes[0];
@@ -687,10 +694,6 @@ public class MapleDeadlockGraphMaker {
     private static Integer parseMethodCalls(MapleDeadlockGraphMethod node, JavaParser.ExpressionContext call, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass, boolean filter) {
         JavaParser.ExpressionContext curCtx = call;
 
-        if(call.getText().contains("answerInvite")) {
-            int io = 1;
-        }
-        
         if(curCtx.bop != null) {
             String bopText = curCtx.bop.getText();
             
@@ -704,6 +707,7 @@ public class MapleDeadlockGraphMaker {
                     if(expType != -2) {     // expType -2 means the former expression type has been excluded from the search
                         if(curCtx.methodCall() != null) {
                             Integer ret = getMethodReturnType(node, expType, curCtx.methodCall(), sourceMethod, sourceClass);
+                            
                             if(ret == -1) {
                                 MapleDeadlockClass c = getClassFromType(expType);
                                 if(c != null && c.isInterface()) {  // it's an interface, there's no method implementation to be found there
@@ -975,6 +979,7 @@ public class MapleDeadlockGraphMaker {
             
             mapleBasicDataTypes.put(i, s);
             mapleEveryDataTypes.put(i, s);
+            mapleEveryDataTypeIds.put(s, i);
             
             MapleDeadlockAbstractType aType = getAbstractType(s);
             if(aType != MapleDeadlockAbstractType.NON_ABSTRACT) {
@@ -989,6 +994,7 @@ public class MapleDeadlockGraphMaker {
             
             mapleClassDataTypes.put(i, d);
             mapleEveryDataTypes.put(i, MapleDeadlockStorage.getCanonClassName(d));
+            mapleEveryDataTypeIds.put(MapleDeadlockStorage.getCanonClassName(d), i);
             
             MapleDeadlockAbstractType aType = getAbstractType(d.getName());
             if(aType != MapleDeadlockAbstractType.NON_ABSTRACT) {
@@ -1071,8 +1077,22 @@ public class MapleDeadlockGraphMaker {
         return enumIds;
     }
     
+    private static Integer defineObjectSet() {
+        Integer objectId = mapleEveryDataTypeIds.get("Object");
+        Integer setId = mapleEveryDataTypeIds.get("Set");
+        
+        for (Entry<Integer, List<Integer>> e : mapleCompoundDataTypes.entrySet()) {
+            if (e.getValue().get(0).equals(objectId) && e.getValue().get(1).equals(setId)) {
+                return e.getKey();
+            }
+        }
+        
+        return -1;
+    }
+    
     public static MapleDeadlockGraph generateSourceGraph(MapleDeadlockStorage metadata) {
         reinstanceCachedMaps(metadata);
+        objectSetId = defineObjectSet();
         
         maplePublicPackages = metadata.getPublicClasses();
         maplePrivateClasses = metadata.getPrivateClasses();

@@ -212,10 +212,6 @@ public class MapleDeadlockFunction {
             return true;
         }
         
-        for(Entry<Integer, Integer> i : elementalTypes.entrySet()) {
-            if(type.equals(i.getValue())) return true;
-        }
-        
         List<Integer> cType = compoundTypes.get(type);
         if(cType != null) {
             for(Integer i : cType) {

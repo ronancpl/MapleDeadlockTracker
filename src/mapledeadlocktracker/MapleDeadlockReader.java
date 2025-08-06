@@ -43,8 +43,6 @@ import org.antlr.v4.runtime.ParserRuleContext;
  * @author RonanLana
  */
 public class MapleDeadlockReader extends JavaParserBaseListener {
-    private static int data[][][][][][][] = new int[7][7][7][7][7][7][7];
-    private static Pair<Integer, Integer> date[][][][][][][] = new Pair[7][7][7][7][7][7][7];
     private static MapleDeadlockStorage storage = new MapleDeadlockStorage();
     private static String syncLockTypeName = "SyncLock";
     
@@ -1066,7 +1064,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         try {
             targetClass = MapleDeadlockStorage.locateClass(t, pc);
         } catch(NullPointerException e) {
-            System.out.println("EXCEPTION ON " + t + " ON SRC " + pc.getPackageName() + pc.getPathName());
+            if (pc != null) System.out.println("EXCEPTION ON " + t + " ON SRC " + pc.getPackageName() + pc.getPathName());
             targetClass = null;
         }
         
@@ -1417,6 +1415,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         */
         
         parseDataTypes();
+        fetchDataType("Set<Object>", null);
         
         generateDereferencedDataTypes();
         

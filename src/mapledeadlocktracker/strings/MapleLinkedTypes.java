@@ -40,14 +40,19 @@ public class MapleLinkedTypes {
         linked.add(instantiateDataLink("StringBuilder", "String"));
         linked.add(instantiateDataLink("StringBuffer", "String"));
         
+        linked.add(instantiateDataLink("Set", "Set"));
         linked.add(instantiateDataLink("LinkedHashSet", "Set"));
         linked.add(instantiateDataLink("HashSet", "Set"));
         
+        linked.add(instantiateDataLink("List", "List"));
         linked.add(instantiateDataLink("LinkedList", "List"));
         linked.add(instantiateDataLink("ArrayList", "List"));
         linked.add(instantiateDataLink("Deque", "List"));
         linked.add(instantiateDataLink("Queue", "List"));
         
+        linked.add(instantiateDataLink("Entry", "Object"));
+        
+        linked.add(instantiateDataLink("Map", "Map"));
         linked.add(instantiateDataLink("LinkedHashMap", "Map"));
         linked.add(instantiateDataLink("HashMap", "Map"));
         linked.add(instantiateDataLink("EnumMap", "Map"));
