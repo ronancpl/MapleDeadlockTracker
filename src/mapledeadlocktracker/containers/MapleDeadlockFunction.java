@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import javaparser.JavaParser;
 
@@ -209,6 +210,10 @@ public class MapleDeadlockFunction {
     private static boolean isIgnoredType(Integer type) {
         if(isIgnoredRange(type)) {
             return true;
+        }
+        
+        for(Entry<Integer, Integer> i : elementalTypes.entrySet()) {
+            if(type.equals(i.getValue())) return true;
         }
         
         List<Integer> cType = compoundTypes.get(type);

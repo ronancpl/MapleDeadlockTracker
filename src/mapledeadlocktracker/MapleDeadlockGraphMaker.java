@@ -668,6 +668,10 @@ public class MapleDeadlockGraphMaker {
             return true;
         }
         
+        for(int i = 0; i < mapleElementalTypes.length; i++) {
+            if(type.equals(mapleElementalTypes[i])) return true;
+        }
+        
         List<Integer> cType = mapleCompoundDataTypes.get(type);
         if(cType != null) {
             for(Integer i : cType) {

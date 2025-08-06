@@ -71,7 +71,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
     
     // ---- volatile fields ----
     
-    private static AtomicInteger runningId = new AtomicInteger(0);
+    private static AtomicInteger runningId = new AtomicInteger(1);
     private static AtomicInteger runningSyncLockId = new AtomicInteger(0);
     private static AtomicInteger runningTypeId = new AtomicInteger(1);  // volatile id 0 reserved for sync locks
     private static AtomicInteger runningMethodCallCount = new AtomicInteger(0);
