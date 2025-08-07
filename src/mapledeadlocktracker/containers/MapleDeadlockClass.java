@@ -76,6 +76,10 @@ public class MapleDeadlockClass {
         return parent;
     }
     
+    public void setParent(MapleDeadlockClass parent) {
+        this.parent = parent;
+    }
+    
     public int getMaskedTypeSize() {
         return typeMasks.size();
     }
@@ -189,6 +193,10 @@ public class MapleDeadlockClass {
     
     public String getPackageName() {
         return packName;
+    }
+    
+    public void setPackageName(String packName) {
+        this.packName = packName;
     }
     
     public List<String> getSuperNameList() {

@@ -22,7 +22,7 @@ import java.util.Map.Entry;
  * @author RonanLana
  */
 public class MapleDeadlockStorage {
-    private static Map<String, Map<String, MapleDeadlockClass>> maplePublicPackages = new HashMap<>();
+    private static Map<String, Map<String, MapleDeadlockClass>> maplePublicClasses = new HashMap<>();
     private static Map<String, Map<String, MapleDeadlockClass>> maplePrivateClasses = new HashMap<>();
     private static Map<String, MapleDeadlockLock> mapleLocks = new HashMap<>();
     private static Map<String, MapleDeadlockLock> mapleReadWriteLocks = new HashMap<>();
@@ -39,11 +39,11 @@ public class MapleDeadlockStorage {
     
     private static List<MapleDeadlockFunction> mapleRunnableMethods = new ArrayList<>();
     
-    public Map<String, Map<String, MapleDeadlockClass>> getPublicClasses() {
-        return maplePublicPackages;
+    public static Map<String, Map<String, MapleDeadlockClass>> getPublicClasses() {
+        return maplePublicClasses;
     }
     
-    public Map<String, Map<String, MapleDeadlockClass>> getPrivateClasses() {
+    public static Map<String, Map<String, MapleDeadlockClass>> getPrivateClasses() {
         return maplePrivateClasses;
     }
     
@@ -129,7 +129,7 @@ public class MapleDeadlockStorage {
         String pname = thisClass.getPackageName();
         
         if(pname.charAt(pname.length() - 1) == '.') {
-            return maplePublicPackages.get(pname).get(className);
+            return maplePublicClasses.get(pname).get(className);
         } else {
             MapleDeadlockClass ret = maplePrivateClasses.get(pname).get(className);
             
@@ -137,7 +137,7 @@ public class MapleDeadlockStorage {
                 int idx = pname.lastIndexOf('.');
                 pname = pname.substring(0, idx + 1);
                 
-                ret = maplePublicPackages.get(pname).get(className);
+                ret = maplePublicClasses.get(pname).get(className);
             }
             
             return ret;
@@ -192,14 +192,14 @@ public class MapleDeadlockStorage {
     }
     
     public static MapleDeadlockClass locateCanonClass(String canonName) {
-        int idx = canonName.lastIndexOf(".");
+        int idx = canonName.lastIndexOf('.');
         
         String packName = canonName.substring(0, idx + 1);
         String className = canonName.substring(idx + 1);
         
         //System.out.println("p: " + packName + " c: " + className);
         try {
-            return maplePublicPackages.get(packName).get(className);
+            return maplePublicClasses.get(packName).get(className);
         } catch(Exception e) {}
         
         Pair<String, String> p = getPrivateNameParts(canonName);
@@ -273,7 +273,7 @@ public class MapleDeadlockStorage {
     
     private static String dumpCachedImports() {
         String s = "--------\nMaple PUBLIC IMPORTS:\n";
-        for(Entry<String, Map<String, MapleDeadlockClass>> m : maplePublicPackages.entrySet()) {
+        for(Entry<String, Map<String, MapleDeadlockClass>> m : maplePublicClasses.entrySet()) {
             s += ("\nPACKAGE " + m.getKey() + "\n");
             for(Entry<String, MapleDeadlockClass> c : m.getValue().entrySet()) {
                 s += ("\t" + c.getValue().getPathName() + "\n");
@@ -288,7 +288,7 @@ public class MapleDeadlockStorage {
     
     private static String dumpCachedPackages() {
         String s = "--------\nMaple PUBLIC:\n";
-        for(Entry<String, Map<String, MapleDeadlockClass>> m : maplePublicPackages.entrySet()) {
+        for(Entry<String, Map<String, MapleDeadlockClass>> m : maplePublicClasses.entrySet()) {
             s += ("\nPACKAGE " + m.getKey() + "\n");
             for(Entry<String, MapleDeadlockClass> c : m.getValue().entrySet()) {
                 s += ("\t" + c.getValue().getPathName() + " Super: " + c.getValue().getSuperNameList() + "\n");
