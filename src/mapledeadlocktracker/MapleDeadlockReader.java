@@ -1470,7 +1470,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                 String cname = m.group(1);
             
                 MapleDeadlockClass sup = MapleDeadlockStorage.locateClass(cname, c);
-                c.setParent(sup);
+                if (sup != null) c.setParent(sup);
             }
         }
         customClasses.clear();
