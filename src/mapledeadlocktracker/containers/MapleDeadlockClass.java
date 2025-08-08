@@ -76,10 +76,6 @@ public class MapleDeadlockClass {
         return parent;
     }
     
-    public void setParent(MapleDeadlockClass parent) {
-        this.parent = parent;
-    }
-    
     public int getMaskedTypeSize() {
         return typeMasks.size();
     }
@@ -208,7 +204,7 @@ public class MapleDeadlockClass {
     }
     
     public void addSuper(MapleDeadlockClass s) {
-        if(s != null) {
+        if(s != null && s != this) {
             superClass.add(s);
         }
     }

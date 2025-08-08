@@ -1047,13 +1047,24 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         }
     }
     
+    private static Pattern p = Pattern.compile("([\\w\\d_]+)(_[\\d]+)?");
+    
+    private static String getNameFromCustomClass(String name) {
+        Matcher m = p.matcher(name);
+        if (m.find()) {
+            return m.group(1);
+        }
+        
+        return null;
+    }
+    
     private static void parseSuperClasses(Map<String, Map<String, MapleDeadlockClass>> classes) {
         for(Map<String, MapleDeadlockClass> m : classes.values()) {
             for(MapleDeadlockClass mdc : m.values()) {
                 List<String> superNames = mdc.getSuperNameList();
             
                 for(String supName : superNames) {
-                    MapleDeadlockClass sup = MapleDeadlockStorage.locateClass(supName, mdc);
+                    MapleDeadlockClass sup = MapleDeadlockStorage.locateClass(getNameFromCustomClass(supName), mdc);
                     mdc.addSuper(sup);
                     
                     List<MapleDeadlockClass> list = mapleInheritanceTree.get(sup);
@@ -1461,16 +1472,12 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         }
     }
     
-    static Pattern p = Pattern.compile("([\\w\\d_]+)_[\\d]+");
-    
     private static void referenceCustomClasses() {
         for (MapleDeadlockClass c : customClasses) {
-            Matcher m = p.matcher(c.getName());
-            if (m.find()) {
-                String cname = m.group(1);
-            
+            String cname = getNameFromCustomClass(c.getName());
+            if (cname != null) {
                 MapleDeadlockClass sup = MapleDeadlockStorage.locateClass(cname, c);
-                if (sup != null) c.setParent(sup);
+                c.addSuper(sup);
             }
         }
         customClasses.clear();
