@@ -11,6 +11,8 @@
 */
 package mapledeadlocktracker.graph;
 
+import mapledeadlocktracker.strings.MapleIgnoredTypes;
+
 /**
  *
  * @author RonanLana
@@ -35,5 +37,71 @@ public enum MapleDeadlockAbstractType {
 
     public int getValue() {
         return i;
+    }
+    
+    public static MapleDeadlockAbstractType getValue(String typeName) {
+        /*
+        System.out.print("testing ABST " + typeName + " ");
+        String t = typeName.split("<", 1)[0];
+
+        int idx = t.lastIndexOf('.');
+        if(idx > -1) t = t.substring(idx + 1);  // removing the package part of the type declaration
+        */
+
+        //System.out.print("goingfor " + t + " ");
+        
+        switch(typeName) {
+            case "Collection":
+            case "LinkedHashSet":
+            case "HashSet":
+            case "Set":
+                //System.out.println(MapleDeadlockAbstractType.SET);
+                return MapleDeadlockAbstractType.SET;
+
+            case "LinkedList":
+            case "ArrayList":
+            case "List":
+                //System.out.println(MapleDeadlockAbstractType.LIST);
+                return MapleDeadlockAbstractType.LIST;
+
+            case "LinkedHashMap":
+            case "HashMap":
+            case "EnumMap":
+            case "Map":
+                //System.out.println(MapleDeadlockAbstractType.MAP);
+                return MapleDeadlockAbstractType.MAP;
+            
+            case "SyncLock":
+            case "ReentrantReadWriteLock":
+            case "ReentrantLock":
+            case "ReadWriteLock":
+            case "ReadLock":
+            case "WriteLock":
+            case "Lock":
+                //System.out.println(MapleDeadlockAbstractType.LOCK);
+                return MapleDeadlockAbstractType.LOCK;
+            
+            case "PriorityQueue":
+                //System.out.println(MapleDeadlockAbstractType.PRIORITYQUEUE);
+                return MapleDeadlockAbstractType.PRIORITYQUEUE;
+                
+            case "WeakReference":
+            case "Reference":
+                //System.out.println(MapleDeadlockAbstractType.REFERENCE);
+                return MapleDeadlockAbstractType.REFERENCE;
+                
+            case "StringBuffer":
+            case "StringBuilder":
+            case "String":
+                return MapleDeadlockAbstractType.STRING;
+                
+            default:
+                if(MapleIgnoredTypes.isDataTypeIgnored(typeName)) {
+                    return MapleDeadlockAbstractType.OTHER;
+                }
+                
+                //System.out.println(MapleDeadlockAbstractType.NON_ABSTRACT);
+                return MapleDeadlockAbstractType.NON_ABSTRACT;
+        }
     }
 }

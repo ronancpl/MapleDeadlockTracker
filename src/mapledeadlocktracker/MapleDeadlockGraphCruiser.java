@@ -273,7 +273,7 @@ public class MapleDeadlockGraphCruiser {
             r.add(ek);
             
             for (Entry<Integer, Set<FunctionLockElement>> f : lockDependencies.entrySet()) {
-                if (!r.contains(ek)) {
+                if (!r.contains(f.getKey())) {
                     if (detectDeadlocksInLockSequence(ek, e.getValue(), f.getKey(), f.getValue())) {
                         for (MapleDeadlockFunction m : lockFunctions.get(ek)) {
                             for (MapleDeadlockFunction n : lockFunctions.get(f.getKey())) {

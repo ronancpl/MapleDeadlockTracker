@@ -28,18 +28,18 @@ import mapledeadlocktracker.containers.MapleDeadlockFunction;
 import mapledeadlocktracker.containers.MapleDeadlockLock;
 import mapledeadlocktracker.containers.MapleDeadlockStorage;
 import mapledeadlocktracker.containers.Pair;
-import mapledeadlocktracker.strings.MapleIgnoredTypes;
+import mapledeadlocktracker.graph.MapleDeadlockAbstractType;
 import mapledeadlocktracker.graph.MapleDeadlockGraphEntry;
 import mapledeadlocktracker.graph.MapleDeadlockGraphNodeCall;
 import mapledeadlocktracker.graph.MapleDeadlockGraphNodeLock;
 import mapledeadlocktracker.graph.MapleDeadlockGraphMethod;
-import mapledeadlocktracker.graph.MapleDeadlockAbstractType;
+
 /**
  *
  * @author RonanLana
  */
 public class MapleDeadlockGraphMaker {
-    private static Map<String, Map<String, MapleDeadlockClass>> maplePublicPackages;
+    private static Map<String, Map<String, MapleDeadlockClass>> maplePublicClasses;
     private static Map<String, Map<String, MapleDeadlockClass>> maplePrivateClasses;
     private static Map<String, MapleDeadlockLock> mapleLocks;
     
@@ -210,7 +210,7 @@ public class MapleDeadlockGraphMaker {
             t = getPrimaryTypeOnFieldVars(name, sourceClass);
         
             if(t == null) {
-                // maybe basic types        
+                // maybe basic types
                 t = mapleBasicDataTypeIds.get(name);
                 if(t != null) return t;
                 
@@ -689,6 +689,10 @@ public class MapleDeadlockGraphMaker {
     
     private static Integer parseMethodCalls(MapleDeadlockGraphMethod node, JavaParser.ExpressionContext call, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass, boolean filter) {
         JavaParser.ExpressionContext curCtx = call;
+        
+        if(curCtx.getText().contentEquals("broadcastMessage(MaplePacketCreator.triggerReactor(reactor,0))")) {
+            int i = 0;
+        }
 
         if(curCtx.bop != null) {
             String bopText = curCtx.bop.getText();
@@ -902,72 +906,6 @@ public class MapleDeadlockGraphMaker {
         }
     }
     
-    private static MapleDeadlockAbstractType getAbstractType(String typeName) {
-        /*
-        System.out.print("testing ABST " + typeName + " ");
-        String t = typeName.split("<", 1)[0];
-
-        int idx = t.lastIndexOf('.');
-        if(idx > -1) t = t.substring(idx + 1);  // removing the package part of the type declaration
-        */
-
-        //System.out.print("goingfor " + t + " ");
-        
-        switch(typeName) {
-            case "Collection":
-            case "LinkedHashSet":
-            case "HashSet":
-            case "Set":
-                //System.out.println(MapleDeadlockAbstractType.SET);
-                return MapleDeadlockAbstractType.SET;
-
-            case "LinkedList":
-            case "ArrayList":
-            case "List":
-                //System.out.println(MapleDeadlockAbstractType.LIST);
-                return MapleDeadlockAbstractType.LIST;
-
-            case "LinkedHashMap":
-            case "HashMap":
-            case "EnumMap":
-            case "Map":
-                //System.out.println(MapleDeadlockAbstractType.MAP);
-                return MapleDeadlockAbstractType.MAP;
-            
-            case "SyncLock":
-            case "ReentrantReadWriteLock":
-            case "ReentrantLock":
-            case "ReadWriteLock":
-            case "ReadLock":
-            case "WriteLock":
-            case "Lock":
-                //System.out.println(MapleDeadlockAbstractType.LOCK);
-                return MapleDeadlockAbstractType.LOCK;
-            
-            case "PriorityQueue":
-                //System.out.println(MapleDeadlockAbstractType.PRIORITYQUEUE);
-                return MapleDeadlockAbstractType.PRIORITYQUEUE;
-                
-            case "WeakReference":
-            case "Reference":
-                //System.out.println(MapleDeadlockAbstractType.REFERENCE);
-                return MapleDeadlockAbstractType.REFERENCE;
-                
-            case "StringBuffer":
-            case "StringBuilder":
-            case "String":
-                return MapleDeadlockAbstractType.STRING;
-                
-            default:
-                if(MapleIgnoredTypes.isDataTypeIgnored(typeName)) {
-                    return MapleDeadlockAbstractType.OTHER;
-                }
-                
-                //System.out.println(MapleDeadlockAbstractType.NON_ABSTRACT);
-                return MapleDeadlockAbstractType.NON_ABSTRACT;
-        }
-    }
-    
     private static void reinstanceCachedMaps(MapleDeadlockStorage metadata) {
         for(Entry<String, Integer> e : metadata.getBasicDataTypes().entrySet()) {
             Integer i = e.getValue();
@@ -977,7 +915,7 @@ public class MapleDeadlockGraphMaker {
             mapleEveryDataTypes.put(i, s);
             mapleEveryDataTypeIds.put(s, i);
             
-            MapleDeadlockAbstractType aType = getAbstractType(s);
+            MapleDeadlockAbstractType aType = MapleDeadlockAbstractType.getValue(s);
             if(aType != MapleDeadlockAbstractType.NON_ABSTRACT) {
                 mapleAbstractDataTypes.put(i, aType);
             }
@@ -992,7 +930,7 @@ public class MapleDeadlockGraphMaker {
             mapleEveryDataTypes.put(i, MapleDeadlockStorage.getCanonClassName(d));
             mapleEveryDataTypeIds.put(MapleDeadlockStorage.getCanonClassName(d), i);
             
-            MapleDeadlockAbstractType aType = getAbstractType(d.getName());
+            MapleDeadlockAbstractType aType = MapleDeadlockAbstractType.getValue(d.getName());
             if(aType != MapleDeadlockAbstractType.NON_ABSTRACT) {
                 mapleAbstractDataTypes.put(i, aType);
             }
@@ -1062,7 +1000,7 @@ public class MapleDeadlockGraphMaker {
     public static Set<Integer> generateEnumReferences() {
         Set<Integer> enumIds = new HashSet<>();
         
-        for(Map<String, MapleDeadlockClass> m : maplePublicPackages.values()) {
+        for(Map<String, MapleDeadlockClass> m : maplePublicClasses.values()) {
             for(MapleDeadlockClass c : m.values()) {
                 if(c.isEnum()) {
                     enumIds.add(mapleClassDataTypeIds.get(c));
@@ -1090,7 +1028,7 @@ public class MapleDeadlockGraphMaker {
         reinstanceCachedMaps(metadata);
         objectSetId = defineObjectSet();
         
-        maplePublicPackages = metadata.getPublicClasses();
+        maplePublicClasses = metadata.getPublicClasses();
         maplePrivateClasses = metadata.getPrivateClasses();
         mapleLocks = metadata.getLocks();
         mapleElementalDataTypes = metadata.getElementalDataTypes();
@@ -1103,16 +1041,16 @@ public class MapleDeadlockGraphMaker {
         
         mapleEnumDataTypes = generateEnumReferences();
         
-        generateSuperReferences(maplePublicPackages);
+        generateSuperReferences(maplePublicClasses);
         generateSuperReferences(maplePrivateClasses);
         
-        generateMethodNodes(maplePublicPackages);
+        generateMethodNodes(maplePublicClasses);
         generateMethodNodes(maplePrivateClasses);
         
         MapleDeadlockFunction.installTypeReferences(mapleElementalDataTypes, mapleCompoundDataTypes, mapleSuperClasses, mapleEnumDataTypes, mapleIgnoredDataRange, mapleElementalTypes[0]);
         
         try {
-            parseMethodNodes(maplePublicPackages);
+            parseMethodNodes(maplePublicClasses);
             parseMethodNodes(maplePrivateClasses);
             
             parseRunnableMethodNodes();

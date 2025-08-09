@@ -11,14 +11,13 @@
 */
 package mapledeadlocktracker.strings;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  *
  * @author RonanLana
  */
-
-import java.util.HashSet;
-import java.util.Set;
-
 public class MapleIgnoredTypes {
     private static final Set<String> ignored = new HashSet<>();
     

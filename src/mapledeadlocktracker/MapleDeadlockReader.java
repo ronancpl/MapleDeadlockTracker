@@ -33,6 +33,7 @@ import mapledeadlocktracker.containers.MapleDeadlockFunction;
 import mapledeadlocktracker.containers.MapleDeadlockLock;
 import mapledeadlocktracker.containers.MapleDeadlockStorage;
 import mapledeadlocktracker.containers.Pair;
+import mapledeadlocktracker.graph.MapleDeadlockAbstractType;
 import mapledeadlocktracker.strings.MapleIgnoredTypes;
 import mapledeadlocktracker.strings.MapleLinkedTypes;
 import mapledeadlocktracker.strings.MapleReflectedTypes;
@@ -80,6 +81,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
     private static Stack<MapleDeadlockFunction> methodStack = new Stack();
     private static List<MapleDeadlockClass> classStack = new ArrayList();
     private static Stack<Integer> syncLockStack = new Stack();
+    private static boolean isIgnoredClass;
     
     private static Set<String> readLockWaitingSet = new HashSet();
     private static Set<String> writeLockWaitingSet = new HashSet();
@@ -212,16 +214,18 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
     @Override
     public void enterCreator(JavaParser.CreatorContext ctx) {
         if (ctx.createdName().IDENTIFIER().size() > 0) {
-            String className = ctx.createdName().IDENTIFIER().get(0).getText() + "_" + (customClasses.size() + 1);
-        
+            String className = ctx.createdName().IDENTIFIER().get(0).getText();
+            isIgnoredClass = MapleDeadlockAbstractType.getValue(className) != MapleDeadlockAbstractType.NON_ABSTRACT;
+            className = className + "_" + (customClasses.size() + 1);
+
             classStack.add(currentClass);
-            
+
             List<String> supName = new LinkedList<>();
             supName.add(currentClass.getName());
-            
+
             currentClass = new MapleDeadlockClass(MapleDeadlockClassType.CLASS, className, currentPackageName, getPathName(className), supName, false, currentClass);
-            customClasses.add(currentClass);
-            
+            if (!isIgnoredClass) customClasses.add(currentClass);
+
             mapleInheritanceTree.put(currentClass, new LinkedList<>());
         }
     }
@@ -231,30 +235,33 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         if (ctx.createdName().IDENTIFIER().size() > 0) {
             String fcn = currentCompleteFileClassName;
             
-            if(maplePrivateClasses.containsKey(fcn)) {
-                maplePrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
-            } else {
-                maplePrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
+            if (!isIgnoredClass) {
+                if (maplePrivateClasses.containsKey(fcn)) {
+                    maplePrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
+                } else {
+                    maplePrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
+                }
             }
             
             MapleDeadlockClass mdc = currentClass;
             currentClass = classStack.remove(classStack.size() - 1);
-            currentClass.addPrivateClass(mdc.getName(), mdc);
+            if (!isIgnoredClass) currentClass.addPrivateClass(mdc.getName(), mdc);
         }
     }
     
     @Override
     public void enterInnerCreator(JavaParser.InnerCreatorContext ctx) {
-        String className = ctx.IDENTIFIER().getText() + "_" + (customClasses.size() + 1);
-
+        String className = ctx.IDENTIFIER().getText();
+        isIgnoredClass = MapleDeadlockAbstractType.getValue(className) != MapleDeadlockAbstractType.NON_ABSTRACT;
+        className = className + "_" + (customClasses.size() + 1);
         classStack.add(currentClass);
-        
+
         List<String> supName = new LinkedList<>();
         supName.add(currentClass.getName());
-        
+
         currentClass = new MapleDeadlockClass(MapleDeadlockClassType.CLASS, className, currentPackageName, getPathName(className), supName, false, currentClass);
-        customClasses.add(currentClass);
-        
+        if (!isIgnoredClass) customClasses.add(currentClass);
+
         mapleInheritanceTree.put(currentClass, new LinkedList<>());
     }
     
@@ -262,15 +269,17 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
     public void exitInnerCreator(JavaParser.InnerCreatorContext ctx) {
         String fcn = currentCompleteFileClassName;
 
-        if(maplePrivateClasses.containsKey(fcn)) {
-            maplePrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
-        } else {
-            maplePrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
+        if (!isIgnoredClass) {
+            if (maplePrivateClasses.containsKey(fcn)) {
+                maplePrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
+            } else {
+                maplePrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
+            }
         }
         
         MapleDeadlockClass mdc = currentClass;
         currentClass = classStack.remove(classStack.size() - 1);
-        currentClass.addPrivateClass(mdc.getName(), mdc);
+        if (!isIgnoredClass) currentClass.addPrivateClass(mdc.getName(), mdc);
     }
     
     @Override
@@ -1064,6 +1073,10 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                 List<String> superNames = mdc.getSuperNameList();
             
                 for(String supName : superNames) {
+                    if (supName.contains("ActivateItemReactor")) {
+                        int i = 0;
+                    }
+                    
                     MapleDeadlockClass sup = MapleDeadlockStorage.locateClass(getNameFromCustomClass(supName), mdc);
                     mdc.addSuper(sup);
                     
@@ -1490,6 +1503,15 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         
         parseSuperClasses(maplePublicClasses);
         parseSuperClasses(maplePrivateClasses);
+        
+        Map<String, Map<String, MapleDeadlockClass>> m = new HashMap<>();
+        Map<String, MapleDeadlockClass> n = new HashMap<>();
+        
+        m.put("", n);
+        for(MapleDeadlockClass c : customClasses) {
+            n.put(c.getName(), c);
+        }
+        parseSuperClasses(m);
         
         referenceCustomClasses();
         
