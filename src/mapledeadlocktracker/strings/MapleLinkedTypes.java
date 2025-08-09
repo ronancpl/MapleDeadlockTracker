@@ -51,11 +51,14 @@ public class MapleLinkedTypes {
         linked.add(instantiateDataLink("Queue", "List"));
         
         linked.add(instantiateDataLink("Entry", "Object"));
+        linked.add(instantiateDataLink("Exception", "Object"));
         
         linked.add(instantiateDataLink("Map", "Map"));
         linked.add(instantiateDataLink("LinkedHashMap", "Map"));
         linked.add(instantiateDataLink("HashMap", "Map"));
         linked.add(instantiateDataLink("EnumMap", "Map"));
+        linked.add(instantiateDataLink("EnumMap", "Map"));
+        linked.add(instantiateDataLink("AbstractMap", "Map"));
         
         linked.add(instantiateDataLink("ReentrantReadWriteLock", "Lock"));
         linked.add(instantiateDataLink("ReentrantLock", "Lock"));

@@ -191,6 +191,10 @@ public class MapleDeadlockFunction {
             return true;
         }
         
+        if(MapleDeadlockStorage.getBasicDataTypes().get("Object").equals(testParam)) {
+            return true;
+        }
+        
         Set<Integer> inheritTypes = superTypes.get(testParam);
         if(inheritTypes != null) {
             for(Integer t : inheritTypes) {

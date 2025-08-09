@@ -27,6 +27,8 @@ public class MapleIgnoredTypes {
         ignored.add("java");
         ignored.add("Object");
         ignored.add("Iterator");
+        ignored.add("Iterable");
+        ignored.add("Comparable");
         
         ignored.add("Throwable");
         ignored.add("Exception");

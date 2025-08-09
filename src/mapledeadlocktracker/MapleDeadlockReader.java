@@ -81,7 +81,6 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
     private static Stack<MapleDeadlockFunction> methodStack = new Stack();
     private static List<MapleDeadlockClass> classStack = new ArrayList();
     private static Stack<Integer> syncLockStack = new Stack();
-    private static boolean isIgnoredClass;
     
     private static Set<String> readLockWaitingSet = new HashSet();
     private static Set<String> writeLockWaitingSet = new HashSet();
@@ -215,7 +214,6 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
     public void enterCreator(JavaParser.CreatorContext ctx) {
         if (ctx.createdName().IDENTIFIER().size() > 0) {
             String className = ctx.createdName().IDENTIFIER().get(0).getText();
-            isIgnoredClass = MapleDeadlockAbstractType.getValue(className) != MapleDeadlockAbstractType.NON_ABSTRACT;
             className = className + "_" + (customClasses.size() + 1);
 
             classStack.add(currentClass);
@@ -224,7 +222,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
             supName.add(currentClass.getName());
 
             currentClass = new MapleDeadlockClass(MapleDeadlockClassType.CLASS, className, currentPackageName, getPathName(className), supName, false, currentClass);
-            if (!isIgnoredClass) customClasses.add(currentClass);
+            customClasses.add(currentClass);
 
             mapleInheritanceTree.put(currentClass, new LinkedList<>());
         }
@@ -235,24 +233,21 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         if (ctx.createdName().IDENTIFIER().size() > 0) {
             String fcn = currentCompleteFileClassName;
             
-            if (!isIgnoredClass) {
-                if (maplePrivateClasses.containsKey(fcn)) {
-                    maplePrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
-                } else {
-                    maplePrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
-                }
+            if (maplePrivateClasses.containsKey(fcn)) {
+                maplePrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
+            } else {
+                maplePrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
             }
             
             MapleDeadlockClass mdc = currentClass;
             currentClass = classStack.remove(classStack.size() - 1);
-            if (!isIgnoredClass) currentClass.addPrivateClass(mdc.getName(), mdc);
+            currentClass.addPrivateClass(mdc.getName(), mdc);
         }
     }
     
     @Override
     public void enterInnerCreator(JavaParser.InnerCreatorContext ctx) {
         String className = ctx.IDENTIFIER().getText();
-        isIgnoredClass = MapleDeadlockAbstractType.getValue(className) != MapleDeadlockAbstractType.NON_ABSTRACT;
         className = className + "_" + (customClasses.size() + 1);
         classStack.add(currentClass);
 
@@ -260,7 +255,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         supName.add(currentClass.getName());
 
         currentClass = new MapleDeadlockClass(MapleDeadlockClassType.CLASS, className, currentPackageName, getPathName(className), supName, false, currentClass);
-        if (!isIgnoredClass) customClasses.add(currentClass);
+        customClasses.add(currentClass);
 
         mapleInheritanceTree.put(currentClass, new LinkedList<>());
     }
@@ -268,18 +263,15 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
     @Override
     public void exitInnerCreator(JavaParser.InnerCreatorContext ctx) {
         String fcn = currentCompleteFileClassName;
-
-        if (!isIgnoredClass) {
-            if (maplePrivateClasses.containsKey(fcn)) {
-                maplePrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
-            } else {
-                maplePrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
-            }
+        if (maplePrivateClasses.containsKey(fcn)) {
+            maplePrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
+        } else {
+            maplePrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
         }
         
         MapleDeadlockClass mdc = currentClass;
         currentClass = classStack.remove(classStack.size() - 1);
-        if (!isIgnoredClass) currentClass.addPrivateClass(mdc.getName(), mdc);
+        currentClass.addPrivateClass(mdc.getName(), mdc);
     }
     
     @Override
@@ -1073,10 +1065,6 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                 List<String> superNames = mdc.getSuperNameList();
             
                 for(String supName : superNames) {
-                    if (supName.contains("ActivateItemReactor")) {
-                        int i = 0;
-                    }
-                    
                     MapleDeadlockClass sup = MapleDeadlockStorage.locateClass(getNameFromCustomClass(supName), mdc);
                     mdc.addSuper(sup);
                     
@@ -1151,7 +1139,11 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         
         int en = type.indexOf('<');
         if(en != -1) t = type.substring(0, en);
-
+        
+        if (MapleIgnoredTypes.isDataTypeIgnored(t)) {
+            return mapleBasicDataTypes.get("Object");
+        }
+        
         try {
             targetClass = MapleDeadlockStorage.locateClass(t, pc);
         } catch(NullPointerException e) {

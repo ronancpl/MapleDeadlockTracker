@@ -63,7 +63,7 @@ public class MapleDeadlockStorage {
         return mapleCompoundDataTypes;
     }
     
-    public Map<String, Integer> getBasicDataTypes() {
+    public static Map<String, Integer> getBasicDataTypes() {
         return mapleBasicDataTypes;
     }
     

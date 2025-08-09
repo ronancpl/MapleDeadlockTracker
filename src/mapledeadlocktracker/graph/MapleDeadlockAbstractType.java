@@ -87,6 +87,9 @@ public enum MapleDeadlockAbstractType {
                 
             case "WeakReference":
             case "Reference":
+            case "Iterator":
+            case "Iterable":
+            case "Comparable":
                 //System.out.println(MapleDeadlockAbstractType.REFERENCE);
                 return MapleDeadlockAbstractType.REFERENCE;
                 

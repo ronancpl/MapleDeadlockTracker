@@ -821,7 +821,9 @@ public class MapleDeadlockGraphMaker {
             Integer innerType = parseMethodCalls(node, inner, sourceMethod, sourceClass);     // add to the calling method further lock acquisitions from this section
             Integer outerType = parseMethodCalls(node, outer, sourceMethod, sourceClass);
             
-            return getDereferencedType(outerType, sourceClass);
+            if (outerType != mapleBasicDataTypeIds.get("Object")) {
+                return getDereferencedType(outerType, sourceClass);
+            }
         } else if(curCtx.primary() != null) {
             JavaParser.PrimaryContext priCtx = curCtx.primary();
             
