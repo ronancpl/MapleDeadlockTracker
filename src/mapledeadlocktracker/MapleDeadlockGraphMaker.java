@@ -61,7 +61,7 @@ public class MapleDeadlockGraphMaker {
     private static Map<Integer, MapleDeadlockClass> mapleClassDataTypes = new HashMap<>();
     private static Map<Integer, MapleDeadlockAbstractType> mapleAbstractDataTypes = new HashMap<>();
     private static Map<Integer, String> mapleBasicDataTypes = new HashMap<>();
-    private static Map<Integer, Integer> mapleDereferencedDataTypes = new HashMap<>();
+    private static Map<String, Integer> mapleDereferencedDataTypes = new HashMap<>();
     
     private static Map<Integer, String> mapleEveryDataTypes = new HashMap<>();
     private static Map<String, Integer> mapleEveryDataTypeIds = new HashMap<>();
@@ -441,11 +441,11 @@ public class MapleDeadlockGraphMaker {
         if(c == null) {
             List<Integer> cTypes = mapleCompoundDataTypes.get(expType);
             if(cTypes != null) {
-                c = getClassFromType(cTypes.get(cTypes.size() - 1));
+                int t = cTypes.get(cTypes.size() - 1);
+                if (t == -2) return -2;
                 
-                if(c == null) {
-                    return -1;
-                }
+                c = getClassFromType(t);
+                if(c == null) return -1;
                 
                 metImpl = getTemplateMethodImplementations(c, method, expType, argTypes, mapleElementalDataTypes);
             } else {
@@ -581,27 +581,14 @@ public class MapleDeadlockGraphMaker {
         return -2;
     }
     
-    private static Integer getDereferencedType(Integer type, MapleDeadlockClass sourceClass) {
-        Integer defType = mapleDereferencedDataTypes.get(type);
+    private static Integer getDereferencedType(String derTypeName, MapleDeadlockClass derClass) {
+        Integer defType = mapleDereferencedDataTypes.get(derTypeName);
         if(defType != null) return defType;
         
-        String typeName = mapleBasicDataTypes.get(type);
-        typeName = typeName.substring(0, typeName.lastIndexOf('['));
+        if (derClass == null) defType = mapleBasicDataTypeIds.get(derTypeName);
+        else defType = mapleClassDataTypeIds.get(derClass);
         
-        defType = mapleBasicDataTypeIds.get(typeName);
-        if(defType == null) {
-            MapleDeadlockClass c = MapleDeadlockStorage.locateClass(typeName, sourceClass);
-            if(c != null) {
-                defType = mapleClassDataTypeIds.get(c);
-                
-                if(defType == null) {
-                    System.out.println("DEREFERENCED OUT " + type);
-                    defType = -2;
-                }
-            }
-        }
-        
-        mapleDereferencedDataTypes.put(type, defType);
+        mapleDereferencedDataTypes.put(derTypeName, defType);
         return defType;
     }
     
@@ -619,7 +606,6 @@ public class MapleDeadlockGraphMaker {
     
     private static Integer parseMethodCalls(MapleDeadlockGraphMethod node, JavaParser.ExpressionContext call, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass) {
         Integer ret = parseMethodCalls(node, call, sourceMethod, sourceClass, true);
-        
         if(ret == -1) {
             // apply a poor-man's filter for missed cases
             String expr = call.getText(), base;
@@ -687,10 +673,25 @@ public class MapleDeadlockGraphMaker {
         return false;
     }
     
+    private static Integer getThisType(MapleDeadlockClass sourceClass) {
+        if (sourceClass == null) return null;
+        
+        Integer cid = mapleClassDataTypeIds.get(sourceClass);
+        if (cid != null) return cid;
+
+        for (MapleDeadlockClass mdc : sourceClass.getSuperList()) {
+            cid = getThisType(mdc);
+            if (cid != null) return cid;
+        }
+        
+        cid = getThisType(sourceClass.getParent());
+        return cid;
+    }
+    
     private static Integer parseMethodCalls(MapleDeadlockGraphMethod node, JavaParser.ExpressionContext call, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass, boolean filter) {
         JavaParser.ExpressionContext curCtx = call;
         
-        if(curCtx.getText().contentEquals("broadcastMessage(MaplePacketCreator.triggerReactor(reactor,0))")) {
+        if(curCtx.getText().contentEquals("MapleCharacter.this.getMp()") && sourceClass.getName().contains("Runnable")) {
             int i = 0;
         }
 
@@ -702,89 +703,92 @@ public class MapleDeadlockGraphMaker {
                 Integer expType = parseMethodCalls(node, expCtx, sourceMethod, sourceClass);
                 
                 if(expType == null) System.out.println("null on " + expCtx.getText() + " src is " + MapleDeadlockStorage.getCanonClassName(sourceClass));
-                
-                if(expType != -1) {
-                    if(expType != -2) {     // expType -2 means the former expression type has been excluded from the search
-                        if(curCtx.methodCall() != null) {
-                            Integer ret = getMethodReturnType(node, expType, curCtx.methodCall(), sourceMethod, sourceClass);
-                            
-                            if(ret == -1) {
-                                MapleDeadlockClass c = getClassFromType(expType);
-                                if(c != null && c.isInterface()) {  // it's an interface, there's no method implementation to be found there
-                                    ret = -2;
-                                }
-                            }
-                            
-                            return ret;
-                        } else if(curCtx.IDENTIFIER() != null) {
-                            if(isIgnoredType(expType)) {
-                                return -2;
-                            }
-                            
-                            MapleDeadlockClass c = getClassFromType(expType);
-                            Set<Integer> templateTypes = null;
+                if (curCtx.THIS() == null) {
+                    if(expType != -1) {
+                        if(expType != -2) {     // expType -2 means the former expression type has been excluded from the search
+                            if(curCtx.methodCall() != null) {
+                                Integer ret = getMethodReturnType(node, expType, curCtx.methodCall(), sourceMethod, sourceClass);
 
-                            if(c == null) {
-                                List<Integer> cTypes = mapleCompoundDataTypes.get(expType);
-                                if(cTypes != null) {
-                                    c = getClassFromType(cTypes.get(cTypes.size() - 1));
-
-                                    if(c == null) {
-                                        //System.out.println("GFAILED @ " + cTypes.get(cTypes.size() - 1));
-                                    } else {
-                                        templateTypes = c.getMaskedTypeSet();
+                                if(ret == -1) {
+                                    MapleDeadlockClass c = getClassFromType(expType);
+                                    if(c != null && c.isInterface()) {  // it's an interface, there's no method implementation to be found there
+                                        ret = -2;
                                     }
                                 }
 
+                                return ret;
+                            } else if(curCtx.IDENTIFIER() != null) {
+                                if(isIgnoredType(expType)) {
+                                    return -2;
+                                }
+
+                                MapleDeadlockClass c = getClassFromType(expType);
+                                Set<Integer> templateTypes = null;
+
                                 if(c == null) {
-                                    String typeName = mapleBasicDataTypes.get(expType);
-                                    
-                                    if(typeName != null && typeName.charAt(typeName.length() - 1) == ']') {
+                                    List<Integer> cTypes = mapleCompoundDataTypes.get(expType);
+                                    if(cTypes != null) {
+                                        c = getClassFromType(cTypes.get(cTypes.size() - 1));
+
+                                        if(c == null) {
+                                            //System.out.println("GFAILED @ " + cTypes.get(cTypes.size() - 1));
+                                        } else {
+                                            templateTypes = c.getMaskedTypeSet();
+                                        }
+                                    }
+
+                                    if(c == null) {
+                                        String typeName = mapleBasicDataTypes.get(expType);
+
+                                        if(typeName != null && typeName.charAt(typeName.length() - 1) == ']') {
+                                            if(curCtx.IDENTIFIER().getText().contentEquals("length")) {
+                                                return mapleElementalTypes[0];
+                                            }
+                                        }
+
+                                        //System.out.println("FAILED @ " + expType);
+                                        System.out.println("[Warning] No datatype found for " + curCtx.IDENTIFIER() + " on expression " + curCtx.getText() + " srcclass " + MapleDeadlockStorage.getCanonClassName(sourceClass) + " detected exptype " + expType);
+                                        return -2;
+                                    }
+                                } else {
+                                    if(c.isEnum()) {    // it's an identifier defining an specific item from an enum, return self-type
                                         if(curCtx.IDENTIFIER().getText().contentEquals("length")) {
                                             return mapleElementalTypes[0];
                                         }
+
+                                        return expType;
                                     }
-                                    
-                                    //System.out.println("FAILED @ " + expType);
-                                    System.out.println("[Warning] No datatype found for " + curCtx.IDENTIFIER() + " on expression " + curCtx.getText() + " srcclass " + MapleDeadlockStorage.getCanonClassName(sourceClass) + " detected exptype " + expType);
+
+                                    templateTypes = c.getMaskedTypeSet();
+                                }
+
+                                String element = curCtx.IDENTIFIER().getText();
+                                Integer type = c.getFieldVariable(element);
+                                if(type == null) {
+                                    MapleDeadlockClass mdc = MapleDeadlockStorage.locateInternalClass(element, c);  // element could be a private class reference
+                                    if(mdc != null) {
+                                        return mapleClassDataTypeIds.get(mdc);
+                                    }
+
+                                    //System.out.println("SOMETHING OUT OF CALL FOR FIELD " + curCtx.IDENTIFIER().getText() + " ON " + MapleDeadlockStorage.getCanonClassName(c));
+                                    return -1;
+                                }
+
+                                Integer ret = getRelevantType(type, templateTypes, c, expType);
+                                return ret;
+                            } else if(curCtx.THIS() != null) {
+                                return expType;
+                            } else if(curCtx.primary() != null) {
+                                if(curCtx.primary().CLASS() != null) {
                                     return -2;
                                 }
-                            } else {
-                                if(c.isEnum()) {    // it's an identifier defining an specific item from an enum, return self-type
-                                    if(curCtx.IDENTIFIER().getText().contentEquals("length")) {
-                                        return mapleElementalTypes[0];
-                                    }
-                                    
-                                    return expType;
-                                }
-
-                                templateTypes = c.getMaskedTypeSet();
                             }
-
-                            String element = curCtx.IDENTIFIER().getText();
-                            Integer type = c.getFieldVariable(element);
-                            if(type == null) {
-                                MapleDeadlockClass mdc = MapleDeadlockStorage.locateInternalClass(element, c);  // element could be a private class reference
-                                if(mdc != null) {
-                                    return mapleClassDataTypeIds.get(mdc);
-                                }
-                                
-                                //System.out.println("SOMETHING OUT OF CALL FOR FIELD " + curCtx.IDENTIFIER().getText() + " ON " + MapleDeadlockStorage.getCanonClassName(c));
-                                return -1;
-                            }
-
-                            Integer ret = getRelevantType(type, templateTypes, c, expType);
-                            return ret;
-                        } else if(curCtx.THIS() != null) {
-                            return expType;
-                        } else if(curCtx.primary() != null) {
-                            if(curCtx.primary().CLASS() != null) {
-                                return -2;
-                            }
+                        } else {
+                            return -2;
                         }
-                    } else {
-                        return -2;
                     }
+                } else {
+                    return expType;
                 }
             } else if(bopText.contentEquals("+")) {
                 // must decide between string concatenation of numeric data types
@@ -818,12 +822,28 @@ public class MapleDeadlockGraphMaker {
             JavaParser.ExpressionContext outer = curCtx.expression(0);
             JavaParser.ExpressionContext inner = curCtx.expression(1);
             
-            Integer innerType = parseMethodCalls(node, inner, sourceMethod, sourceClass);     // add to the calling method further lock acquisitions from this section
-            Integer outerType = parseMethodCalls(node, outer, sourceMethod, sourceClass);
-            
-            if (outerType != mapleBasicDataTypeIds.get("Object")) {
-                return getDereferencedType(outerType, sourceClass);
+            int c;
+            for (c = curCtx.getChildCount() - 1; c >= 0; c--) {
+                if (!curCtx.getChild(c).getText().contentEquals("]")) {
+                    break;
+                }
             }
+            c++;
+            
+            Integer outerType = parseMethodCalls(node, outer, sourceMethod, sourceClass);
+            MapleDeadlockClass outerClass = mapleClassDataTypes.get(outerType);
+            String outerName;
+            if (outerClass != null) {
+                outerName = outerClass.getName();
+            } else {
+                outerName = mapleBasicDataTypes.get(outerType);
+            }
+            
+            for(int i = 0; i < curCtx.getChildCount() - c; i++) {
+                outerName += "[]";
+            }
+            Integer defType = getDereferencedType(outerName.substring(0,outerName.lastIndexOf('[')), outerClass);
+            return defType;
         } else if(curCtx.primary() != null) {
             JavaParser.PrimaryContext priCtx = curCtx.primary();
             
@@ -834,7 +854,7 @@ public class MapleDeadlockGraphMaker {
             } else if(priCtx.literal() != null) {
                 return getLiteralType(priCtx.literal());
             } else if(priCtx.THIS() != null) {
-                return mapleClassDataTypeIds.get(sourceClass);
+                return getThisType(sourceClass);
             } else if(priCtx.CLASS() != null) {
                 return -2;
             } else if(priCtx.SUPER() != null) {
@@ -950,7 +970,10 @@ public class MapleDeadlockGraphMaker {
             }
         }
         
-        mapleBasicDataTypeIds = metadata.getBasicDataTypes();
+        mapleBasicDataTypeIds = new HashMap<>();
+        for (Entry<Integer, String> e : mapleBasicDataTypes.entrySet()) {
+            mapleBasicDataTypeIds.put(e.getValue(), e.getKey());
+        }
     }
     
     private static void generateMethodNodes(Map<String, Map<String, MapleDeadlockClass>> packageClasses) {
@@ -1144,8 +1167,8 @@ public class MapleDeadlockGraphMaker {
         }
         
         System.out.println("\n\nmapleDereferencedDataTypes :::::");
-        for(Entry<Integer, Integer> e : mapleDereferencedDataTypes.entrySet()) {
-            System.out.println(translateId(mapleEveryDataTypes, e.getKey()) + " " + translateId(mapleEveryDataTypes, e.getValue()));
+        for(Entry<String, Integer> e : mapleDereferencedDataTypes.entrySet()) {
+            System.out.println(e.getKey() + " " + translateId(mapleEveryDataTypes, e.getValue()));
         }
     }
     

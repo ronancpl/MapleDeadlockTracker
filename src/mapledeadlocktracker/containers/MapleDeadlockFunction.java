@@ -236,7 +236,7 @@ public class MapleDeadlockFunction {
                 if(isIgnoredType(parType)) continue;
                 
                 Integer param = params.get(i);
-                if(param == -2) continue;
+                if(param == -2 || parType == -2) continue;
                 
                 if(!hasTypeInheritance(parType, param)) {
                     strongRef = 0;

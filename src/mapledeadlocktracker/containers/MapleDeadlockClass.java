@@ -55,8 +55,19 @@ public class MapleDeadlockClass {
     public MapleDeadlockClass(MapleDeadlockClassType ctype, String className, String packageName, String classPathName, List<String> superNames, boolean abstracted, MapleDeadlockClass parentClass) {
         type = ctype;
         name = className;
-        packName = packageName;
-        pathName = classPathName;
+        
+        if (!classPathName.contains(".")) {
+            packName = packageName;
+            pathName = classPathName;
+        } else {
+            String names[] = classPathName.split("\\.");
+            for (int i = 0; i < names.length - 1; i++) {
+                packageName += names[i] + ".";
+            }
+
+            packName = packageName;
+            pathName = names[names.length - 1];
+        }
         
         parent = parentClass;
         

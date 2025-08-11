@@ -21,8 +21,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javalexer.JavaLexer;
 import javaparser.JavaParser;
 import javaparser.JavaParserBaseListener;
@@ -33,7 +31,6 @@ import mapledeadlocktracker.containers.MapleDeadlockFunction;
 import mapledeadlocktracker.containers.MapleDeadlockLock;
 import mapledeadlocktracker.containers.MapleDeadlockStorage;
 import mapledeadlocktracker.containers.Pair;
-import mapledeadlocktracker.graph.MapleDeadlockAbstractType;
 import mapledeadlocktracker.strings.MapleIgnoredTypes;
 import mapledeadlocktracker.strings.MapleLinkedTypes;
 import mapledeadlocktracker.strings.MapleReflectedTypes;
@@ -622,7 +619,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                 }
             }
             */
-            }
+        }
     }
     
     @Override
@@ -941,7 +938,8 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
     
     private static MapleDeadlockClass getPrivateClass(String packageName, String className) {
         //System.out.println("trying " + packageName + " on " + className);
-        MapleDeadlockClass mdc = maplePrivateClasses.get(packageName).get(className);
+        Map<String, MapleDeadlockClass> m = maplePrivateClasses.get(packageName);
+        MapleDeadlockClass mdc = (m != null) ? m.get(className) : null;
         
         //if(mdc == null) System.out.println("FAILED TO FIND PRIVATE '" + className + "' @ '" + packageName + "'");
         return mdc;
@@ -950,9 +948,11 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
     private static List<MapleDeadlockClass> getAllPrivateClassesWithin(String treeName, Map<String, MapleDeadlockClass> privateMap) {
         List<MapleDeadlockClass> list = new LinkedList<>();
         
-        for(Entry<String, MapleDeadlockClass> m : privateMap.entrySet()) {
-            if(m.getKey().startsWith(treeName)) {
-                list.add(m.getValue());
+        if (privateMap != null) {
+            for(Entry<String, MapleDeadlockClass> m : privateMap.entrySet()) {
+                if(m.getKey().startsWith(treeName)) {
+                    list.add(m.getValue());
+                }
             }
         }
         
@@ -991,29 +991,33 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                     }
                 }
             } else {
-                //System.out.println("\n\nfailed finding " + s + " on PUBLIC");
-                //check private imports in case of failure
-                
-                Pair<String, String> privateNames = MapleDeadlockStorage.getPrivateNameParts(s);
-                if(privateNames != null) {
-                    packageName = privateNames.left;
-                    className = privateNames.right;
-                    
-                    if(!isEnumClass(packageName, className)) {
-                        int idx = className.lastIndexOf('*');
-                        if(idx != -1) {
-                            s = s.substring(0, idx);
+                if (maplePrivateClasses.get(s) == null) {
+                    //System.out.println("\n\nfailed finding " + s + " on PUBLIC");
+                    //check private imports in case of failure
 
-                            for(MapleDeadlockClass packClass : getAllPrivateClassesWithin(className, maplePrivateClasses.get(packageName))) {
-                                mdc.updateImport(packClass.getPathName(), s, packClass);
+                    Pair<String, String> privateNames = MapleDeadlockStorage.getPrivateNameParts(s);
+                    if(privateNames != null) {
+                        packageName = privateNames.left;
+                        className = privateNames.right;
+
+                        if(!isEnumClass(packageName, className)) {
+                            int idx = className.lastIndexOf('*');
+                            if(idx != -1) {
+                                s = s.substring(0, idx);
+
+                                for(MapleDeadlockClass packClass : getAllPrivateClassesWithin(className, maplePrivateClasses.get(packageName))) {
+                                    mdc.updateImport(packClass.getPathName(), s, packClass);
+                                }
+                            } else {
+                                MapleDeadlockClass importedClass = getPrivateClass(packageName, className);
+                                if(importedClass != null) {
+                                    mdc.updateImport(importedClass.getPathName(), s, importedClass);
+                                }
                             }
                         } else {
-                            MapleDeadlockClass importedClass = getPrivateClass(packageName, className);
+                            MapleDeadlockClass importedClass = getPrivateClass(packageName, className.substring(0, className.lastIndexOf('.')));
                             mdc.updateImport(importedClass.getPathName(), s, importedClass);
                         }
-                    } else {
-                        MapleDeadlockClass importedClass = getPrivateClass(packageName, className.substring(0, className.lastIndexOf('.')));
-                        mdc.updateImport(importedClass.getPathName(), s, importedClass);
                     }
                 }
             }
@@ -1048,32 +1052,23 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         }
     }
     
-    private static Pattern p = Pattern.compile("([\\w\\d_]+)(_[\\d]+)?");
-    
-    private static String getNameFromCustomClass(String name) {
-        Matcher m = p.matcher(name);
-        if (m.find()) {
-            return m.group(1);
-        }
-        
-        return null;
-    }
-    
     private static void parseSuperClasses(Map<String, Map<String, MapleDeadlockClass>> classes) {
         for(Map<String, MapleDeadlockClass> m : classes.values()) {
             for(MapleDeadlockClass mdc : m.values()) {
                 List<String> superNames = mdc.getSuperNameList();
-            
+                
                 for(String supName : superNames) {
-                    MapleDeadlockClass sup = MapleDeadlockStorage.locateClass(getNameFromCustomClass(supName), mdc);
-                    mdc.addSuper(sup);
-                    
-                    List<MapleDeadlockClass> list = mapleInheritanceTree.get(sup);
-                    if(list != null) {
-                        list.add(mdc);
+                    MapleDeadlockClass sup = MapleDeadlockStorage.locateClass(supName, mdc);
+                    if (mdc != sup) {
+                        mdc.addSuper(sup);
+
+                        List<MapleDeadlockClass> list = mapleInheritanceTree.get(sup);
+                        if(list != null) {
+                            list.add(mdc);
+                        }
+
+                        //if(sup == null) System.out.println("NULL SUPER '" + superName + "' FOR '" + mdc.getName() + "'");
                     }
-                    
-                    //if(sup == null) System.out.println("NULL SUPER '" + superName + "' FOR '" + mdc.getName() + "'");
                 }
             }
         }
@@ -1152,85 +1147,45 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         }
         
         if(targetClass != null) {
+            String nameChanged = "";
+            if(c > 0) {
+                for(int i = 0; i <= c; i++) {
+                    ret = mapleBasicDataTypes.get(targetClass.getName() + nameChanged);
+                    if(ret == null) {
+                        ret = runningTypeId.getAndIncrement();
+                        mapleBasicDataTypes.put(targetClass.getName() + nameChanged, ret);
+                    }
+                    
+                    nameChanged += "[]";
+                }
+            }
+
             ret = mapleClassDataTypes.get(targetClass);
             if(ret == null) {
                 ret = runningTypeId.getAndIncrement();
                 mapleClassDataTypes.put(targetClass, ret);
             }
-        }
-        
-        if(targetClass == null || c > 0) {
-            if(c > 0 && targetClass != null) {
-                t = MapleDeadlockStorage.getCanonClassName(targetClass);     // whole canon name, ignores whatever is inside <> operators
-                
-                for(int i = 0; i < c; i++) {
-                    t += "[]";
-                }
-                
-                ret = mapleBasicDataTypes.get(t);
+            
+            if(!compoundType.isEmpty()) {
+                compoundType.add(ret);
+
+                ret = mapleCompoundDataTypes.get(compoundType);
                 if(ret == null) {
                     ret = runningTypeId.getAndIncrement();
-                    mapleBasicDataTypes.put(t, ret);
-                }
-            } else {
-                boolean nameChanged = false;
-                
-                ret = mapleBasicDataTypes.get(t);
-                if(ret != null) {
-                    String linkedName = mapleLinkedDataNames.get(ret);
-                    if(linkedName != null) {
-                        t = linkedName;     // attribute the linked name to this type
-                        nameChanged = true;
-                    }
-                }
+                    //mapleCompoundDataNames.put(ret, type);
 
-                if(c > 0) {
-                    for(int i = 0; i < c; i++) {
-                        t += "[]";
-                    }
-                    
-                    nameChanged = true;
+                    mapleCompoundDataTypes.put(compoundType, ret);
                 }
-                
-                if(nameChanged) ret = mapleBasicDataTypes.get(t);
-                if(ret == null) {
-                    idx = t.lastIndexOf('.');
-                    if(idx != -1) {
-                        // check class
-                        
-                        String maybeEnum = t.substring(0, idx);
-                        try {
-                            targetClass = MapleDeadlockStorage.locateClass(maybeEnum, pc);
-                        } catch(NullPointerException e) {}
-                        
-                        if(targetClass != null && targetClass.isEnum()) {
-                            ret = mapleElementalTypes[0];   // this is an enum variable
-                            
-                            mapleBasicDataTypes.put(t, ret);
-                            return ret;
-                        }
-                        
-                        t = t.substring(idx + 1);
-                    }
-                    
-                    ret = mapleBasicDataTypes.get(t);
-                    if(ret == null) {
-                        ret = runningTypeId.getAndIncrement();
-                        mapleBasicDataTypes.put(t, ret);
-                    }
-                }
+            }
+        } else if(c > 0) {
+            for(int i = 0; i < c; i++) {
+                t += "[]";
+            }
 
-                if(!compoundType.isEmpty()) {
-                    compoundType.add(ret);
-
-                    ret = mapleCompoundDataTypes.get(compoundType);
-                    if(ret == null) {
-                        ret = runningTypeId.getAndIncrement();
-                        //mapleCompoundDataNames.put(ret, type);
-                        
-                        mapleCompoundDataTypes.put(compoundType, ret);
-                    }
-                }
+            ret = mapleBasicDataTypes.get(t);
+            if(ret == null) {
+                ret = runningTypeId.getAndIncrement();
+                mapleBasicDataTypes.put(t, ret);
             }
         } else {
             if(!compoundType.isEmpty()) {
@@ -1256,6 +1211,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         
         Pair<String, String> p = volatileDataTypes.get(volatileType);
         String type = p.left;
+        if(type.contentEquals("void")) return -2;
         
         int index = p.right.lastIndexOf('.');
         String pPackage = p.right.substring(0, index + 1);
@@ -1422,43 +1378,32 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
     }
     
     private static void generateDereferencedDataTypes() {
-        List<String> basicDataTypes = new LinkedList<>();
-        List<String> classDataTypes = new LinkedList<>();
-        
         for(Entry<String, Integer> e : mapleBasicDataTypes.entrySet()) {
             String s = e.getKey();
             
             int c = countOccurrences(s, '[');
             if(c > 0) {
-                for(int i = 0; i < c - 1; i++) {
-                    s = s.substring(0, s.lastIndexOf('['));
-                    basicDataTypes.add(s);
-                }
-                
-                s = s.substring(0, s.lastIndexOf('['));
-                if(!s.contains(".")) {
-                    basicDataTypes.add(s);
+                MapleDeadlockClass targetClass = MapleDeadlockStorage.locatePublicClass(s.substring(0, s.indexOf('[')));
+                if (targetClass != null) {
+                    String nameChanged = "";
+                    for(int i = 0; i < c; i++) {
+                        nameChanged += "[]";
+                    }
+
+                    if(nameChanged.length() > 0) {
+                        Integer i = mapleBasicDataTypes.get(targetClass.getName() + nameChanged);
+                        if(i == null) {
+                            i = runningTypeId.getAndIncrement();
+                            mapleBasicDataTypes.put(targetClass.getName() + nameChanged, i);
+                        }
+                    }
                 } else {
-                    classDataTypes.add(s);
+                    Integer i = mapleBasicDataTypes.get(s);
+                    if(i == null) {
+                        i = runningTypeId.getAndIncrement();
+                        mapleBasicDataTypes.put(s, i);
+                    }
                 }
-            }
-        }
-        
-        for(String s : basicDataTypes) {
-            if(mapleBasicDataTypes.get(s) == null) {
-                mapleBasicDataTypes.put(s, runningTypeId.getAndIncrement());
-            }
-        }
-        
-        for(String s : classDataTypes) {
-            MapleDeadlockClass mdc = MapleDeadlockStorage.locateCanonClass(s);
-            
-            if(mdc != null) {
-                if(mapleClassDataTypes.get(mdc) == null) {
-                    mapleClassDataTypes.put(mdc, runningTypeId.getAndIncrement());
-                }
-            } else {
-                System.out.println("ERROR on locating '" + s + "'");
             }
         }
     }
@@ -1479,11 +1424,8 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
     
     private static void referenceCustomClasses() {
         for (MapleDeadlockClass c : customClasses) {
-            String cname = getNameFromCustomClass(c.getName());
-            if (cname != null) {
-                MapleDeadlockClass sup = MapleDeadlockStorage.locateClass(cname, c);
-                c.addSuper(sup);
-            }
+            MapleDeadlockClass sup = MapleDeadlockStorage.locateClass(c.getName(), c);
+            c.addSuper(sup);
         }
         customClasses.clear();
     }

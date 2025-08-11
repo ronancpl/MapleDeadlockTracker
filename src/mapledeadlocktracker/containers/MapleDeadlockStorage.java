@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -95,7 +97,7 @@ public class MapleDeadlockStorage {
         return ignoredDataRange;
     }
     
-    private static MapleDeadlockClass locatePrivateClass(String className, MapleDeadlockClass thisClass) {
+    private static MapleDeadlockClass locateSubclass(String className, MapleDeadlockClass thisClass) {
         return thisClass.getPrivateClass(className);
     }
     
@@ -107,7 +109,7 @@ public class MapleDeadlockStorage {
         //System.out.println("testing " + className + " on " + thisClass.getPackageName() + thisClass.getName());
         if(thisClass.getName().contentEquals(className)) return thisClass;
         
-        MapleDeadlockClass pc = locatePrivateClass(className, thisClass);
+        MapleDeadlockClass pc = locateSubclass(className, thisClass);
         if(pc != null) return pc;
         
         for(MapleDeadlockClass mdc : thisClass.getSuperList()) {
@@ -129,7 +131,8 @@ public class MapleDeadlockStorage {
         String pname = thisClass.getPackageName();
         
         if(pname.charAt(pname.length() - 1) == '.') {
-            return maplePublicClasses.get(pname).get(className);
+            Map<String, MapleDeadlockClass> m = maplePublicClasses.get(pname);
+            return (m != null) ? m.get(className) : null;
         } else {
             MapleDeadlockClass ret = maplePrivateClasses.get(pname).get(className);
             
@@ -160,54 +163,36 @@ public class MapleDeadlockStorage {
     }
     
     public static Pair<String, String> getPrivateNameParts(String canonName) {
-        String packName, curName, className = canonName;
+        String[] names = canonName.split("\\.");
         
-        int idx = className.indexOf('.');
-        if(idx != -1) {
-            curName = className.substring(0, idx);
-            className = className.substring(idx + 1);
+        String cname;
+        int i;
+        if (names.length > 0) {
+            cname = names[0];
+            
+            for (i = 1; i < names.length; i++) {
+                if(maplePublicClasses.get(cname) != null) break;
+                cname += names[i];
+            }
+            
+            return new Pair<>(cname,canonName.substring(cname.length() + 1));
         } else {
-            curName = className;
-            className = "";
+            cname = canonName;
+            i = 0;
+            
+            return new Pair<>(cname,"");
         }
-        
-        packName = curName;
-        
-        Map<String, MapleDeadlockClass> m;
-        while(true) {
-            m = maplePrivateClasses.get(packName);
-            if(m != null) break;
-            
-            idx = className.indexOf('.');
-            if(idx == -1) return null;
-            
-            curName = className.substring(0, idx);
-            className = className.substring(idx + 1);
-            
-            packName += ("." + curName);
-        }
-        
-        className = curName + "." + className;
-        return new Pair<>(packName, className);
     }
     
-    public static MapleDeadlockClass locateCanonClass(String canonName) {
+    public static MapleDeadlockClass locatePublicClass(String canonName) {
         int idx = canonName.lastIndexOf('.');
         
         String packName = canonName.substring(0, idx + 1);
         String className = canonName.substring(idx + 1);
         
-        //System.out.println("p: " + packName + " c: " + className);
-        try {
-            return maplePublicClasses.get(packName).get(className);
-        } catch(Exception e) {}
-        
-        Pair<String, String> p = getPrivateNameParts(canonName);
-        if(p != null) {
-            packName = p.left;
-            className = p.right;
-            
-            return maplePrivateClasses.get(packName).get(className);
+        Map<String, MapleDeadlockClass> m = maplePublicClasses.get(packName);
+        if (m != null) {
+            return m.get(className);
         }
         
         return null;    // could be classes not implemented on the project source scope
@@ -219,7 +204,7 @@ public class MapleDeadlockStorage {
         MapleDeadlockClass ret;
 
         //check private classes
-        ret = locatePrivateClass(className, thisClass);
+        ret = locateSubclass(className, thisClass);
         if(ret != null) return ret;
 
         //check inside inherited classes
@@ -234,30 +219,62 @@ public class MapleDeadlockStorage {
         return locateThroughPackage(className, thisClass);
     }
     
+    private static Pattern p = Pattern.compile("([\\w\\d_\\.]+)(_[\\d]+)?");
+    
+    private static String getNameFromCanonClass(String name) {
+        Matcher m = p.matcher(name);
+        if (m.find()) {
+            return m.group(0);
+        }
+        
+        return "";
+    }
+    
+    private static boolean findClassInPath(String className, String pathNames[]) {
+        for (int i = 0; i < pathNames.length; i++) {
+            if (className.contentEquals(pathNames[i])) return true;
+        }
+        
+        return false;
+    }
+    
+    private static MapleDeadlockClass locatePrivateClass(String className, MapleDeadlockClass thisClass) {
+        String privateClassName = getNameFromCanonClass(thisClass.getPathName());
+        String names[] = thisClass.getPathName().split("\\.");
+
+        MapleDeadlockClass ret = locateClassInternal(className, thisClass);
+        if(ret != null && findClassInPath(className, names)) {
+            Map<String, MapleDeadlockClass> m = maplePrivateClasses.get(ret.getPackageName() + names[0]);
+            if (m != null) {
+                ret = m.get(privateClassName.substring(0, privateClassName.indexOf(className) + className.length()));
+            }
+        }
+        
+        return ret;
+    }
+    
+    public static String getPublicPackageName(MapleDeadlockClass thisClass) {
+        String s = thisClass.getPackageName();
+        
+        while (true) {
+            if (maplePublicClasses.get(s) != null) return s;
+            
+            int i = s.substring(0, s.length() - 1).lastIndexOf('.');
+            if (i < 0) return null;
+            
+            s = s.substring(0, i + 1);
+        }
+    }
+    
     public static MapleDeadlockClass locateClass(String className, MapleDeadlockClass thisClass) {
         if(thisClass == null) return null;
         
         //System.out.println("locating "  + className + " from " + MapleDeadlockStorage.getCanonClassName(thisClass));
         
-        MapleDeadlockClass ret;
-        if(!className.contains(".")) {
-            ret = locateClassInternal(className, thisClass);
-        } else {
-            String names[] = className.split("\\.");
-            
-            ret = locateClassInternal(names[0], thisClass);
-            if(ret != null) {
-                for(int i = 1; i < names.length; i++) {
-                    ret = locatePrivateClass(names[i], ret);
-                    if(ret == null) break;
-                }
-            }
-            
-            if(ret == null) {
-                return locateCanonClass(className);
-            }
-        }
+        MapleDeadlockClass ret = locatePublicClass(getPublicPackageName(thisClass) + className);
+        if (ret != null) return ret;
         
+        ret = locatePrivateClass(className, thisClass);
         return ret;
     }
     
