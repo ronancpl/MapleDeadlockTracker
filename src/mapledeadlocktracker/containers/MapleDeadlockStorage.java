@@ -13,9 +13,11 @@ package mapledeadlocktracker.containers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -184,7 +186,22 @@ public class MapleDeadlockStorage {
         }
     }
     
-    public static MapleDeadlockClass locatePublicClass(String canonName) {
+    private static Set<String> fetchPackageNamesFromImports(MapleDeadlockClass thisClass) {
+        Set<String> packNames = new HashSet<>();
+        for (MapleDeadlockClass mdc : thisClass.getImportClasses()) {
+            packNames.add(mdc.getPackageName());
+        }
+        
+        MapleDeadlockClass parentClass = thisClass.getParent();
+        if (parentClass != null) {
+            packNames.add(parentClass.getPackageName());
+            packNames.addAll(fetchPackageNamesFromImports(parentClass));
+        }
+        
+        return packNames;
+    }
+    
+    public static MapleDeadlockClass locatePublicClass(String canonName, MapleDeadlockClass thisClass) {
         int idx = canonName.lastIndexOf('.');
         
         String packName = canonName.substring(0, idx + 1);
@@ -193,6 +210,16 @@ public class MapleDeadlockStorage {
         Map<String, MapleDeadlockClass> m = maplePublicClasses.get(packName);
         if (m != null) {
             return m.get(className);
+        }
+        
+        if (thisClass != null) {
+            Set<String> packNames = fetchPackageNamesFromImports(thisClass);
+            for (String pname : packNames) {
+                MapleDeadlockClass mdc = maplePublicClasses.get(pname).get(className);
+                if (mdc != null) {
+                    return mdc;
+                }
+            }
         }
         
         return null;    // could be classes not implemented on the project source scope
@@ -271,7 +298,7 @@ public class MapleDeadlockStorage {
         
         //System.out.println("locating "  + className + " from " + MapleDeadlockStorage.getCanonClassName(thisClass));
         
-        MapleDeadlockClass ret = locatePublicClass(getPublicPackageName(thisClass) + className);
+        MapleDeadlockClass ret = locatePublicClass(getPublicPackageName(thisClass) + className, thisClass);
         if (ret != null) return ret;
         
         ret = locatePrivateClass(className, thisClass);

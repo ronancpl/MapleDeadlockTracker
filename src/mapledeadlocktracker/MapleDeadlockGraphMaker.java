@@ -837,6 +837,9 @@ public class MapleDeadlockGraphMaker {
                 outerName = outerClass.getName();
             } else {
                 outerName = mapleBasicDataTypes.get(outerType);
+                
+                outerClass = MapleDeadlockStorage.locateClass(outerName, sourceClass);
+                if (outerClass != null) outerType = mapleClassDataTypeIds.get(outerClass);
             }
             
             for(int i = 0; i < curCtx.getChildCount() - c; i++) {

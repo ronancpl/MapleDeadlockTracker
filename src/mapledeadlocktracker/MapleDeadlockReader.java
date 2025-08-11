@@ -1147,13 +1147,14 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         }
         
         if(targetClass != null) {
+            Integer classId = runningTypeId.get();
             String nameChanged = "";
             if(c > 0) {
                 for(int i = 0; i <= c; i++) {
-                    ret = mapleBasicDataTypes.get(targetClass.getName() + nameChanged);
+                    ret = mapleBasicDataTypes.get(targetClass.getPackageName() + targetClass.getName() + nameChanged);
                     if(ret == null) {
                         ret = runningTypeId.getAndIncrement();
-                        mapleBasicDataTypes.put(targetClass.getName() + nameChanged, ret);
+                        mapleBasicDataTypes.put(targetClass.getPackageName() + targetClass.getName() + nameChanged, ret);
                     }
                     
                     nameChanged += "[]";
@@ -1162,7 +1163,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
 
             ret = mapleClassDataTypes.get(targetClass);
             if(ret == null) {
-                ret = runningTypeId.getAndIncrement();
+                ret = classId;
                 mapleClassDataTypes.put(targetClass, ret);
             }
             
@@ -1383,7 +1384,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
             
             int c = countOccurrences(s, '[');
             if(c > 0) {
-                MapleDeadlockClass targetClass = MapleDeadlockStorage.locatePublicClass(s.substring(0, s.indexOf('[')));
+                MapleDeadlockClass targetClass = MapleDeadlockStorage.locatePublicClass(s.substring(0, s.indexOf('[')), null);
                 if (targetClass != null) {
                     String nameChanged = "";
                     for(int i = 0; i < c; i++) {
@@ -1391,10 +1392,10 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                     }
 
                     if(nameChanged.length() > 0) {
-                        Integer i = mapleBasicDataTypes.get(targetClass.getName() + nameChanged);
+                        Integer i = mapleBasicDataTypes.get(targetClass.getPackageName() + targetClass.getName() + nameChanged);
                         if(i == null) {
                             i = runningTypeId.getAndIncrement();
-                            mapleBasicDataTypes.put(targetClass.getName() + nameChanged, i);
+                            mapleBasicDataTypes.put(targetClass.getPackageName() + targetClass.getName() + nameChanged, i);
                         }
                     }
                 } else {

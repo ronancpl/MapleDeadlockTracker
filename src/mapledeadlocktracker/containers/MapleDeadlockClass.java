@@ -144,6 +144,15 @@ public class MapleDeadlockClass {
         return new ArrayList<>(importList.keySet());
     }
     
+    public List<MapleDeadlockClass> getImportClasses() {
+        List<MapleDeadlockClass> list = new LinkedList<>();
+        for (MapleDeadlockClass c : importList.values()) {
+            if (c != null) list.add(c);
+        }
+        
+        return list;
+    }
+    
     public List<Pair<String, MapleDeadlockClass>> getImports() {
         List<Pair<String, MapleDeadlockClass>> list = new LinkedList<>();
         
