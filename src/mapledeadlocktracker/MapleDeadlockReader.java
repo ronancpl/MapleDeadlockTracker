@@ -998,33 +998,31 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                     }
                 }
             } else {
-                if (maplePrivateClasses.get(s) == null) {
-                    //System.out.println("\n\nfailed finding " + s + " on PUBLIC");
-                    //check private imports in case of failure
+                //System.out.println("\n\nfailed finding " + s + " on PUBLIC");
+                //check private imports in case of failure
 
-                    Pair<String, String> privateNames = MapleDeadlockStorage.getPrivateNameParts(s);
-                    if(privateNames != null) {
-                        packageName = privateNames.left;
-                        className = privateNames.right;
+                Pair<String, String> privateNames = MapleDeadlockStorage.getPrivateNameParts(s);
+                if(privateNames != null) {
+                    packageName = privateNames.left;
+                    className = privateNames.right;
 
-                        if(!isEnumClass(packageName, className)) {
-                            int idx = className.lastIndexOf('*');
-                            if(idx != -1) {
-                                s = s.substring(0, idx);
+                    if(!isEnumClass(packageName, className)) {
+                        int idx = className.lastIndexOf("\\*");
+                        if(idx != -1) {
+                            s = s.substring(0, idx);
 
-                                for(MapleDeadlockClass packClass : getAllPrivateClassesWithin(className, maplePrivateClasses.get(packageName))) {
-                                    mdc.updateImport(packClass.getPathName(), s, packClass);
-                                }
-                            } else {
-                                MapleDeadlockClass importedClass = getPrivateClass(packageName, className);
-                                if(importedClass != null) {
-                                    mdc.updateImport(importedClass.getPathName(), s, importedClass);
-                                }
+                            for(MapleDeadlockClass packClass : getAllPrivateClassesWithin(className.substring(0, idx - 1), maplePrivateClasses.get(packageName))) {
+                                mdc.updateImport(packClass.getPathName(), s, packClass);
                             }
                         } else {
-                            MapleDeadlockClass importedClass = getPrivateClass(packageName, className.substring(0, className.lastIndexOf('.')));
-                            mdc.updateImport(importedClass.getPathName(), s, importedClass);
+                            MapleDeadlockClass importedClass = getPrivateClass(packageName, className);
+                            if(importedClass != null) {
+                                mdc.updateImport(importedClass.getPathName(), s, importedClass);
+                            }
                         }
+                    } else {
+                        MapleDeadlockClass importedClass = getPrivateClass(packageName, className.substring(0, className.lastIndexOf('.')));
+                        mdc.updateImport(importedClass.getPathName(), s, importedClass);
                     }
                 }
             }

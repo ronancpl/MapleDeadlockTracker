@@ -170,14 +170,18 @@ public class MapleDeadlockStorage {
         String cname;
         int i;
         if (names.length > 0) {
-            cname = names[0];
+            cname = names[0] + ".";
             
             for (i = 1; i < names.length; i++) {
-                if(maplePublicClasses.get(cname) != null) break;
-                cname += names[i];
+                if(maplePublicClasses.get(cname) != null) {
+                    cname += names[i];
+                    i++;
+                    break;
+                }
+                cname += names[i] + ".";
             }
             
-            return new Pair<>(cname,canonName.substring(cname.length() + 1));
+            return new Pair<>(cname,i < names.length ? canonName.substring(Math.min(cname.length() + 1, canonName.length() - 1)) : "");
         } else {
             cname = canonName;
             i = 0;
