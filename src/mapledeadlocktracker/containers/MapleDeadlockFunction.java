@@ -43,7 +43,7 @@ public class MapleDeadlockFunction {
     Set<MapleDeadlockLock> locks;
     
     Map<Long, List<Integer>> volatileLocalVars = new HashMap<>();
-    Map<Long, Integer> localVars = new HashMap();
+    Map<Long, Set<Integer>> localVars = new HashMap();
     Map<Long, String> localVarNames = new HashMap();
     Map<Long, Integer> paramVars;
     
@@ -115,15 +115,15 @@ public class MapleDeadlockFunction {
         volatileLocalVars.clear();
     }
     
-    public void updateLocalVariable(Long name, Integer type) {
-        localVars.put(name, type);
+    public void updateLocalVariable(Long name, Set<Integer> types) {
+        localVars.put(name, types);
     }
     
     public String getLocalVariableName(Long hash) {
         return localVarNames.get(hash);
     }
     
-    public Map<Long, Integer> getLocalVariables() {
+    public Map<Long, Set<Integer>> getLocalVariables() {
         return localVars;
     }
     

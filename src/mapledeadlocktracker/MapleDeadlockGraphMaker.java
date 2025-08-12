@@ -247,8 +247,10 @@ public class MapleDeadlockGraphMaker {
         Long nameHash = MapleDeadlockStorage.hash64(name);
         
         do {
-            Integer type = sourceMethod.getLocalVariables().get(nameHash);
-            if(type != null) return type;
+            Set<Integer> nameTypes = sourceMethod.getLocalVariables().get(nameHash);
+            if(nameTypes != null) {
+                return nameTypes.size() == 1 ? nameTypes.iterator().next() : -2;    // ignore name allocated multiple times
+            }
             
             sourceMethod = sourceMethod.getParent();
         } while(sourceMethod != null);

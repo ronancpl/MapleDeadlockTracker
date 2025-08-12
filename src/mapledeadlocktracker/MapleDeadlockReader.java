@@ -1241,20 +1241,17 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
 
         for(Entry<Long, List<Integer>> lv : f.getVolatileLocalVariables().entrySet()) {
             List<Integer> localList = lv.getValue();
-            Integer localType = parseDataType(localList.get(0));
+            Set<Integer> localTypes = new HashSet<>();
 
-            if(localList.size() > 1) {
-                for(int i = 1; i < localList.size(); i++) {
-                    Integer otherType = parseDataType(localList.get(i));
+            for(int i = 0; i < localList.size(); i++) {
+                Integer type = parseDataType(localList.get(i));
 
-                    if(!localType.equals(otherType)) {
-                        System.out.println("[WARNING] Attributing different data types (" + localType + " vs " + otherType + ") for the same variable name '" + f.getLocalVariableName(lv.getKey()) + "' at method '" + f.getName() + "' on " + MapleDeadlockStorage.getCanonClassName(f.getSourceClass()));
-                        break;
-                    }
+                if(!localTypes.contains(type)) {
+                    localTypes.add(type);
                 }
             }
-
-            f.updateLocalVariable(lv.getKey(), localType);
+            
+            f.updateLocalVariable(lv.getKey(), localTypes);
         }
 
         f.clearVolatileLocalVariables();
