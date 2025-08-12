@@ -929,7 +929,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         return new MapleDeadlockLock(runningId.getAndIncrement(), lockName);
     }
     
-    private static MapleDeadlockClass getPublicClass(String className, String packageName) {
+    private static MapleDeadlockClass getPublicClass(String packageName, String className) {
         MapleDeadlockClass mdc = maplePublicClasses.get(packageName).get(className);
         
         //if(mdc == null) System.out.println("FAILED TO FIND PUBLIC '" + className + "' @ '" + packageName + "'");
@@ -974,8 +974,15 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
     private static void parseImportClass(MapleDeadlockClass mdc) {
         for(String s : mdc.getImportNames()) {
             int j = s.lastIndexOf('.');
-            String packageName = s.substring(0, j + 1);
-            String className = s.substring(j + 1);
+            
+            String packageName, className;
+            if(j > 0) {
+                packageName = s.substring(0, j + 1);
+                className = s.substring(j + 1);
+            } else {
+                packageName = ".";
+                className = s;
+            }
 
             Map<String, MapleDeadlockClass> m = maplePublicClasses.get(packageName);
             
@@ -983,7 +990,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                 mdc.removeImport(s);    // changing full names for class name
                 
                 if(!className.contentEquals("*")) {
-                    MapleDeadlockClass importedClass = getPublicClass(className, packageName);
+                    MapleDeadlockClass importedClass = getPublicClass(packageName, className);
                     mdc.updateImport(importedClass.getPathName(), s, importedClass);
                 } else {
                     for(MapleDeadlockClass packClass : m.values()) {

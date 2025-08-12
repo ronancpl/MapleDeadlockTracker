@@ -41,6 +41,7 @@ import mapledeadlocktracker.graph.MapleDeadlockGraphMethod;
 public class MapleDeadlockGraphMaker {
     private static Map<String, Map<String, MapleDeadlockClass>> maplePublicClasses;
     private static Map<String, Map<String, MapleDeadlockClass>> maplePrivateClasses;
+    private static Map<String, MapleDeadlockClass> mapleAllClasses;
     private static Map<String, MapleDeadlockLock> mapleLocks;
     
     private static Integer objectSetId;
@@ -172,9 +173,63 @@ public class MapleDeadlockGraphMaker {
         return -1;
     }
     
+    private static boolean isImportEnum(String name, MapleDeadlockClass sourceClass) {
+        String names[] = name.split("\\.");
+        if (names.length == 0) names = new String[]{name};
+        
+        return sourceClass.getEnums().contains(names[names.length - 1]);
+    }
+    
+    private static void setImportEnums(MapleDeadlockClass sourceClass) {
+        Set<String> importedEnums = new HashSet<>();
+        for (Pair<String, MapleDeadlockClass> e : sourceClass.getImports()) {
+            if (e.getRight() == null) {     // possible candidate for enum item
+                String names[] = e.getLeft().split("\\.");
+                if (names.length == 0) names = new String[]{e.getLeft()};
+                
+                MapleDeadlockClass c;
+                String path = names[0];
+                int s = -1;
+                
+                int i = 0;
+                while (true) {
+                    c = mapleAllClasses.get(path);
+                    
+                    if (c != null) {
+                        s = path.length();
+                    } else if (s > -1) {
+                        if (i == names.length - 1 || !names[i + 1].contentEquals("*")) {
+                            importedEnums.add(names[names.length - 1]);
+                        } else {
+                            c = mapleAllClasses.get(path.substring(0, path.length() - 2));
+                            if (c.isEnum()) {
+                                MapleDeadlockEnum e1 = (MapleDeadlockEnum) c;
+                                for (String s1 : e1.getEnumItems()) {
+                                    importedEnums.add(s1);
+                                }
+                            }
+                        }
+                        break;
+                    }
+                    
+                    i++;
+                    if (i >= names.length) break;
+                    
+                    path += "." + names[i];
+                }
+            }
+        }
+        
+        sourceClass.setEnums(importedEnums);
+    }
+    
     private static Integer getPrimaryTypeOnFieldVars(String name, MapleDeadlockClass sourceClass) {
         Integer t = sourceClass.getFieldVariable(name);
         if(t != null) return t;
+        
+        if (isImportEnum(name, sourceClass)) {
+            return -2;
+        }
         
         for(MapleDeadlockClass mdc : sourceClass.getSuperList()) {
             t = getPrimaryTypeOnFieldVars(name, mdc);
@@ -462,6 +517,10 @@ public class MapleDeadlockGraphMaker {
                 }
             }
             
+            if (methodCall.getText().contentEquals("getMap().broadcastMessage(MapleCharacter.this,MaplePacketCreator.showOwnBuffEffect(beholder,2),false)")) {
+                int i = 0;
+            }
+            
             metImpl = getMethodImplementations(c, method, expType, argTypes, mapleElementalDataTypes);
         }
         
@@ -707,6 +766,9 @@ public class MapleDeadlockGraphMaker {
                     if(expType != -1) {
                         if(expType != -2) {     // expType -2 means the former expression type has been excluded from the search
                             if(curCtx.methodCall() != null) {
+                                if(curCtx.getText().contentEquals("getMap().broadcastMessage(MapleCharacter.this,MaplePacketCreator.showOwnBuffEffect(beholder,2),false)")) {
+                                    int i = 0;
+                                }
                                 Integer ret = getMethodReturnType(node, expType, curCtx.methodCall(), sourceMethod, sourceClass);
 
                                 if(ret == -1) {
@@ -1052,12 +1114,35 @@ public class MapleDeadlockGraphMaker {
         return -1;
     }
     
+    private static void getAllClassesInternal(Map<String, Map<String, MapleDeadlockClass>> map) {
+        for (Entry<String, Map<String, MapleDeadlockClass>> e : map.entrySet()) {
+            String path = e.getKey() + ".";
+            
+            for (Entry<String, MapleDeadlockClass> f : e.getValue().entrySet()) {
+                mapleAllClasses.put(path + f.getKey(), f.getValue());
+            }    
+        }
+    }
+    
+    private static void getAllClasses() {
+        getAllClassesInternal(maplePublicClasses);
+        getAllClassesInternal(maplePrivateClasses);
+    }
+    
     public static MapleDeadlockGraph generateSourceGraph(MapleDeadlockStorage metadata) {
         reinstanceCachedMaps(metadata);
         objectSetId = defineObjectSet();
         
         maplePublicClasses = metadata.getPublicClasses();
         maplePrivateClasses = metadata.getPrivateClasses();
+        
+        mapleAllClasses = new HashMap<>();
+        getAllClasses();
+        
+        for (MapleDeadlockClass c : mapleAllClasses.values()) {
+            setImportEnums(c);
+        }
+        
         mapleLocks = metadata.getLocks();
         mapleElementalDataTypes = metadata.getElementalDataTypes();
         mapleElementalTypes = metadata.getElementalTypes();

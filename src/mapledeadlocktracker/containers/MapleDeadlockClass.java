@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -32,6 +33,7 @@ public class MapleDeadlockClass {
     boolean isAbstract;
     
     MapleDeadlockClassType type;
+    Set<String> importedEnums = new HashSet<>();
     
     public enum MapleDeadlockClassType {
         CLASS, ENUM, INTERFACE
@@ -301,6 +303,14 @@ public class MapleDeadlockClass {
         }
         
         return checkSuper ? getTemplateMethodOnSuperclass(name, params) : null;
+    }
+    
+    public Set<String> getEnums() {
+        return importedEnums;
+    }
+    
+    public void setEnums(Set<String> values) {
+        importedEnums.addAll(values);
     }
     
     @Override

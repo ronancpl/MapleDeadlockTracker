@@ -33,4 +33,8 @@ public class MapleDeadlockEnum extends MapleDeadlockClass {
     public boolean containsEnumItem(String item) {
         return enumItems.contains(item);
     }
+    
+    public HashSet<String> getEnumItems() {
+        return new HashSet<>(enumItems);
+    }
 }
