@@ -164,7 +164,7 @@ public class MapleDeadlockStorage {
         }
     }
     
-    public static Pair<String, String> getPrivateNameParts(String canonName) {
+    public static Pair<String, String> getPrivatePackageClass(String canonName) {
         String[] names = canonName.split("\\.");
         
         String cname;
@@ -219,9 +219,15 @@ public class MapleDeadlockStorage {
         if (thisClass != null) {
             Set<String> packNames = fetchPackageNamesFromImports(thisClass);
             for (String pname : packNames) {
-                MapleDeadlockClass mdc = maplePublicClasses.get(pname).get(className);
-                if (mdc != null) {
-                    return mdc;
+                if (pname.endsWith(".")) {
+                    if(maplePublicClasses.get(pname) == null) {
+                        int i = 0;
+                    }
+                    
+                    MapleDeadlockClass mdc = maplePublicClasses.get(pname).get(className);
+                    if (mdc != null) {
+                        return mdc;
+                    }
                 }
             }
         }

@@ -328,9 +328,9 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
             String fcn = currentCompleteFileClassName;
             
             if(maplePrivateClasses.containsKey(fcn)) {
-                maplePrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
+                maplePrivateClasses.get(fcn).put(getPathName(currentClass.getName()), currentClass);
             } else {
-                maplePrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
+                maplePrivateClasses.put(fcn, newPackageClass(getPathName(currentClass.getName()), currentClass));
             }
             
             MapleDeadlockClass mdc = currentClass;
@@ -375,9 +375,9 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
             String fcn = currentCompleteFileClassName;
             
             if(maplePrivateClasses.containsKey(fcn)) {
-                maplePrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
+                maplePrivateClasses.get(fcn).put(getPathName(currentClass.getName()), currentClass);
             } else {
-                maplePrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
+                maplePrivateClasses.put(fcn, newPackageClass(getPathName(currentClass.getName()), currentClass));
             }
             
             MapleDeadlockClass mdc = currentClass;
@@ -983,7 +983,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                 packageName = ".";
                 className = s;
             }
-
+            
             Map<String, MapleDeadlockClass> m = maplePublicClasses.get(packageName);
             
             if(m != null) {
@@ -1001,10 +1001,10 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                 //System.out.println("\n\nfailed finding " + s + " on PUBLIC");
                 //check private imports in case of failure
 
-                Pair<String, String> privateNames = MapleDeadlockStorage.getPrivateNameParts(s);
-                if(privateNames != null) {
-                    packageName = privateNames.left;
-                    className = privateNames.right;
+                Pair<String, String> names = MapleDeadlockStorage.getPrivatePackageClass(s);
+                if(names != null) {
+                    packageName = names.left;
+                    className = names.right;
 
                     if(!isEnumClass(packageName, className)) {
                         int idx = className.lastIndexOf("\\*");
@@ -1148,6 +1148,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
             targetClass = MapleDeadlockStorage.locateClass(t, pc);
         } catch(NullPointerException e) {
             if (pc != null) System.out.println("EXCEPTION ON " + t + " ON SRC " + pc.getPackageName() + pc.getPathName());
+            e.printStackTrace();
             targetClass = null;
         }
         

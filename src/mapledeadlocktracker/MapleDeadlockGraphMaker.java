@@ -519,10 +519,6 @@ public class MapleDeadlockGraphMaker {
                 }
             }
             
-            if (methodCall.getText().contentEquals("getMap().broadcastMessage(MapleCharacter.this,MaplePacketCreator.showOwnBuffEffect(beholder,2),false)")) {
-                int i = 0;
-            }
-            
             metImpl = getMethodImplementations(c, method, expType, argTypes, mapleElementalDataTypes);
         }
         
@@ -752,10 +748,6 @@ public class MapleDeadlockGraphMaker {
     private static Integer parseMethodCalls(MapleDeadlockGraphMethod node, JavaParser.ExpressionContext call, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass, boolean filter) {
         JavaParser.ExpressionContext curCtx = call;
         
-        if(curCtx.getText().contentEquals("MapleCharacter.this.getMp()") && sourceClass.getName().contains("Runnable")) {
-            int i = 0;
-        }
-
         if(curCtx.bop != null) {
             String bopText = curCtx.bop.getText();
             
@@ -768,9 +760,6 @@ public class MapleDeadlockGraphMaker {
                     if(expType != -1) {
                         if(expType != -2) {     // expType -2 means the former expression type has been excluded from the search
                             if(curCtx.methodCall() != null) {
-                                if(curCtx.getText().contentEquals("getMap().broadcastMessage(MapleCharacter.this,MaplePacketCreator.showOwnBuffEffect(beholder,2),false)")) {
-                                    int i = 0;
-                                }
                                 Integer ret = getMethodReturnType(node, expType, curCtx.methodCall(), sourceMethod, sourceClass);
 
                                 if(ret == -1) {
