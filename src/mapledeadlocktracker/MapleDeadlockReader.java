@@ -291,7 +291,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         
         if(currentClass != null) {
             classStack.add(currentClass);
-            currentClass = new MapleDeadlockClass(MapleDeadlockClassType.CLASS, className, currentCompleteFileClassName, getPathName(className), superNames, isAbstract, currentClass);
+            currentClass = new MapleDeadlockClass(MapleDeadlockClassType.CLASS, className, currentPackageName, getPathName(className), superNames, isAbstract, currentClass);
         } else {
             currentCompleteFileClassName = currentPackageName + className;
             currentClass = new MapleDeadlockClass(MapleDeadlockClassType.CLASS, className, currentPackageName, getPathName(className), superNames, isAbstract, null);
@@ -348,7 +348,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         
         if(currentClass != null) {
             classStack.add(currentClass);
-            currentClass = new MapleDeadlockEnum(className, currentCompleteFileClassName, getPathName(className), superNames, currentClass);
+            currentClass = new MapleDeadlockEnum(className, currentPackageName, getPathName(className), superNames, currentClass);
         } else {
             currentCompleteFileClassName = currentPackageName + className;
             currentClass = new MapleDeadlockEnum(className, currentPackageName, getPathName(className), superNames, null);
@@ -401,7 +401,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         
         if(currentClass != null) {
             classStack.add(currentClass);
-            currentClass = new MapleDeadlockClass(MapleDeadlockClassType.INTERFACE, className, currentCompleteFileClassName, getPathName(className), superNames, true, currentClass);
+            currentClass = new MapleDeadlockClass(MapleDeadlockClassType.INTERFACE, className, currentPackageName, getPathName(className), superNames, true, currentClass);
         } else {
             currentCompleteFileClassName = currentPackageName + className;
             currentClass = new MapleDeadlockClass(MapleDeadlockClassType.INTERFACE, className, currentPackageName, getPathName(className), superNames, true, null);
@@ -1148,7 +1148,6 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
             targetClass = MapleDeadlockStorage.locateClass(t, pc);
         } catch(NullPointerException e) {
             if (pc != null) System.out.println("EXCEPTION ON " + t + " ON SRC " + pc.getPackageName() + pc.getPathName());
-            e.printStackTrace();
             targetClass = null;
         }
         

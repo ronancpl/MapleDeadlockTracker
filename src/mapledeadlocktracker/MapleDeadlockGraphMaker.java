@@ -490,8 +490,8 @@ public class MapleDeadlockGraphMaker {
         MapleDeadlockFunction retMethod = null;
         Set<Integer> retTemplateTypes = null;
         
-        Set<Pair<MapleDeadlockFunction, Set<Integer>>> allMethodImplementations;
-        Pair<Pair<MapleDeadlockFunction, Set<Integer>>, Set<Pair<MapleDeadlockFunction, Set<Integer>>>> metImpl;
+        Set<List<Pair<MapleDeadlockFunction, Set<Integer>>>> allMethodImplementations = new LinkedHashSet<>();
+        Set<Pair<Pair<MapleDeadlockFunction, Set<Integer>>, Set<Pair<MapleDeadlockFunction, Set<Integer>>>>> metImpl = new HashSet<>();
         
         //System.out.println("requiring return from " + expType + " method " + method);
         
@@ -504,7 +504,7 @@ public class MapleDeadlockGraphMaker {
                 c = getClassFromType(t);
                 if(c == null) return -1;
                 
-                metImpl = getTemplateMethodImplementations(c, method, expType, argTypes, mapleElementalDataTypes);
+                metImpl.add(getTemplateMethodImplementations(c, method, expType, argTypes, mapleElementalDataTypes));
             } else {
                 return -1;
             }
@@ -517,18 +517,30 @@ public class MapleDeadlockGraphMaker {
                 } else if(method.contentEquals("name")) {
                     return mapleElementalTypes[3];
                 }
+            } else if(c.isInterface()) {
+                for(MapleDeadlockClass sc : mapleInheritanceTree.get(c)) {
+                    metImpl.add(getMethodImplementations(sc, method, expType, argTypes, mapleElementalDataTypes));
+                }
+            } else {
+                metImpl.add(getMethodImplementations(c, method, expType, argTypes, mapleElementalDataTypes));
             }
-            
-            metImpl = getMethodImplementations(c, method, expType, argTypes, mapleElementalDataTypes);
         }
         
         // left part contains the method recognized by the expType's class, right part contains ONLY IMPLEMENTED methods by that class and subclasses
-        if(metImpl.left != null) {
-            retMethod = metImpl.left.left;
-            retTemplateTypes = metImpl.left.right;
-        }
+        for (Pair<Pair<MapleDeadlockFunction, Set<Integer>>, Set<Pair<MapleDeadlockFunction, Set<Integer>>>> i : metImpl) {
+            for (Pair<MapleDeadlockFunction, Set<Integer>> p : i.right) {
+                if (p.left.getReturn() != -1) {
+                    retMethod = p.left;
+                    retTemplateTypes = p.right;
 
-        allMethodImplementations = metImpl.right;
+                    break;
+                }
+            }
+        }
+        
+        for(Pair<Pair<MapleDeadlockFunction, Set<Integer>>, Set<Pair<MapleDeadlockFunction, Set<Integer>>>> i : metImpl) {
+            allMethodImplementations.add(new LinkedList<>(i.right));
+        }
         
         //System.out.println("conflicting funct " + mdf.getName() + " on " + MapleDeadlockStorage.getCanonClassName(mdf.getSourceClass()));
         //System.out.println("adding node " + fid);
@@ -545,21 +557,23 @@ public class MapleDeadlockGraphMaker {
         }
         */
         
-        MapleDeadlockGraphEntry entry = new MapleDeadlockGraphEntry();
-
         if(allMethodImplementations.isEmpty()) {
             System.out.println("[Warning] EMPTY method node: " + methodCall.getText() + " @ " + method + " from " + MapleDeadlockStorage.getCanonClassName(c));
         }
         
-        for(Pair<MapleDeadlockFunction, Set<Integer>> mi : allMethodImplementations) {
-            MapleDeadlockFunction mdf = mi.left;
-            //Set<Integer> tt = mi.right;
+        for(List<Pair<MapleDeadlockFunction, Set<Integer>>> mi : allMethodImplementations) {
+            MapleDeadlockGraphEntry entry = new MapleDeadlockGraphEntry();
             
-            Integer fid = mapleGraphFunctionIds.get(mdf);
-            entry.addGraphEntryPoint(new MapleDeadlockGraphNodeCall(fid));
+            for(Pair<MapleDeadlockFunction, Set<Integer>> mip : mi) {
+                MapleDeadlockFunction mdf = mip.left;
+                //Set<Integer> tt = mi.right;
+
+                Integer fid = mapleGraphFunctionIds.get(mdf);
+                entry.addGraphEntryPoint(new MapleDeadlockGraphNodeCall(fid));
+            }
+            
+            node.addGraphEntry(entry);
         }
-        
-        node.addGraphEntry(entry);
         
         if(retMethod == null) return -1;
         return getRelevantType(retMethod.getReturn(), retTemplateTypes, c, expType);
