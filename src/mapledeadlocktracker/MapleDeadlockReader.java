@@ -991,10 +991,10 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                 
                 if(!className.contentEquals("*")) {
                     MapleDeadlockClass importedClass = getPublicClass(packageName, className);
-                    mdc.updateImport(importedClass.getPathName(), s, importedClass);
+                    mdc.updateImport(importedClass.getPackageName() + importedClass.getPathName(), s, importedClass);
                 } else {
                     for(MapleDeadlockClass packClass : m.values()) {
-                        mdc.updateImport(packClass.getPathName(), s, packClass);
+                        mdc.updateImport(packClass.getPackageName() + packClass.getPathName(), s, packClass);
                     }
                 }
             } else {
@@ -1012,17 +1012,17 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                             s = s.substring(0, idx);
 
                             for(MapleDeadlockClass packClass : getAllPrivateClassesWithin(className.substring(0, idx - 1), maplePrivateClasses.get(packageName))) {
-                                mdc.updateImport(packClass.getPathName(), s, packClass);
+                                mdc.updateImport(packClass.getPackageName() + packClass.getPathName(), s, packClass);
                             }
                         } else {
                             MapleDeadlockClass importedClass = getPrivateClass(packageName, className);
                             if(importedClass != null) {
-                                mdc.updateImport(importedClass.getPathName(), s, importedClass);
+                                mdc.updateImport(importedClass.getPackageName() + "." + importedClass.getPathName(), s, importedClass);
                             }
                         }
                     } else {
                         MapleDeadlockClass importedClass = getPrivateClass(packageName, className.substring(0, className.lastIndexOf('.')));
-                        mdc.updateImport(importedClass.getPathName(), s, importedClass);
+                        mdc.updateImport(importedClass.getPackageName() + "." + importedClass.getPathName(), s, importedClass);
                     }
                 }
             }
@@ -1039,10 +1039,9 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         for(Entry<String, Map<String, MapleDeadlockClass>> e : maplePrivateClasses.entrySet()) {
             String pc = e.getKey();
             
-            int idx = pc.lastIndexOf('.');
-            
-            String packName = pc.substring(0, idx + 1);
-            String className = pc.substring(idx + 1);
+            Pair<String, String> p = MapleDeadlockStorage.locateClassPath(pc);
+            String packName = p.left;
+            String className = p.right;
             
             MapleDeadlockClass mdc = maplePublicClasses.get(packName).get(className);
             
@@ -1079,6 +1078,15 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         }
     }
     
+    private static String parseWrappedType(String s) {
+        int idx = s.indexOf("extends");     // assumes the extended element
+        if(idx > -1) {
+            return s.substring(idx + 7);
+        }
+        
+        return s;
+    }
+    
     private static List<String> getWrappedTypes(String type) {
         List<String> ret = new LinkedList<>();
         
@@ -1089,7 +1097,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
 
             if(ch == ',') {
                 if(c == 1) {
-                    ret.add(type.substring(st, i));
+                    ret.add(parseWrappedType(type.substring(st, i)));
                     st = i + 1;
                 }
             } else if(ch == '<') {
@@ -1219,13 +1227,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         String type = p.left;
         if(type.contentEquals("void")) return -2;
         
-        int index = p.right.lastIndexOf('.');
-        String pPackage = p.right.substring(0, index + 1);
-        String pClass = p.right.substring(index + 1);
-        
-        MapleDeadlockClass pc = maplePublicClasses.get(pPackage).get(pClass);  // assuming file public classes finds every implemented types
-        Integer ret = fetchDataType(type, pc);
-        
+        Integer ret = fetchDataType(type, MapleDeadlockStorage.locateClass(p.right));
         return ret;
     }
     

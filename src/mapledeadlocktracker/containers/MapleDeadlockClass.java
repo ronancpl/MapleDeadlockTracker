@@ -128,7 +128,7 @@ public class MapleDeadlockClass {
             }
         }
         
-        importList.put(mdc.getName(), mdc);
+        importList.put(MapleDeadlockStorage.getCanonClassName(mdc), mdc);
         
         List<String> ls = fullImportList.get(s);
         if(ls == null) {
