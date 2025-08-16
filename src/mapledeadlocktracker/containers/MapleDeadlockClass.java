@@ -160,10 +160,7 @@ public class MapleDeadlockClass {
     }
     
     public MapleDeadlockClass getImport(String s) {
-        if(s.contentEquals(this.getName())) return this;
-        if(importList.containsKey(s)) return importList.get(s);
-        if(this.getParent() != null) return this.getParent().getImport(s);
-        return null;
+        return importList.get(s);
     }
     
     public void addPrivateClass(String s, MapleDeadlockClass mdc) {

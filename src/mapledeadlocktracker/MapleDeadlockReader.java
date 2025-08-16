@@ -1066,16 +1066,25 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                         int i = 0;
                     }
                     
-                    MapleDeadlockClass sup = mdc.getImport(supName);
-                    if (mdc2 != sup && sup != null) {
-                        mdc2.addSuper(sup);
-
+                    MapleDeadlockClass sup;
+                    MapleDeadlockClass parent = mdc.getParent();
+                    if(parent != null && mdc2.isInterface() && supName.contentEquals(parent.getName())) {
                         List<MapleDeadlockClass> list = mapleInheritanceTree.get(mdc2);
                         if(list != null) {
-                            list.add(sup);
+                            list.add(parent);
                         }
+                    } else {
+                        sup = mdc.getImport(supName);
+                        if (mdc2 != sup && sup != null) {
+                            mdc2.addSuper(sup);
 
-                        //if(sup == null) System.out.println("NULL SUPER '" + superName + "' FOR '" + mdc.getName() + "'");
+                            List<MapleDeadlockClass> list = mapleInheritanceTree.get(mdc2);
+                            if(list != null) {
+                                list.add(sup);
+                            }
+
+                            //if(sup == null) System.out.println("NULL SUPER '" + superName + "' FOR '" + mdc.getName() + "'");
+                        }
                     }
                 }
                 
