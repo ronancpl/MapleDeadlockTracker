@@ -528,6 +528,9 @@ public class MapleDeadlockGraphMaker {
                 } else if(method.contentEquals("name")) {
                     ret.add(mapleElementalTypes[3]);
                     return ret;
+                } else if(method.contentEquals("equals")) {
+                    ret.add(mapleElementalTypes[4]);
+                    return ret;
                 }
             } else if(c.isInterface()) {
                 for(MapleDeadlockClass sc : mapleInheritanceTree.get(c)) {
@@ -694,7 +697,6 @@ public class MapleDeadlockGraphMaker {
     
     private static Set<Integer> parseMethodCalls(MapleDeadlockGraphMethod node, JavaParser.ExpressionContext call, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass) {
         Set<Integer> metRetTypes = parseMethodCalls(node, call, sourceMethod, sourceClass, true);
-        metRetTypes.remove(-2);
         
         Set<Integer> retTypes = new HashSet<>();
         for (Integer ret : metRetTypes) {
@@ -796,107 +798,112 @@ public class MapleDeadlockGraphMaker {
                 JavaParser.ExpressionContext expCtx = curCtx.expression(0);
                 
                 Set<Integer> metRetTypes = parseMethodCalls(node, expCtx, sourceMethod, sourceClass);
-                for (Integer expType : metRetTypes) {
-                    if(expType == null) System.out.println("null on " + expCtx.getText() + " src is " + MapleDeadlockStorage.getCanonClassName(sourceClass));
-                    if (curCtx.THIS() == null) {
-                        if(expType != -1) {
-                            if(expType != -2) {     // expType -2 means the former expression type has been excluded from the search
-                                if(curCtx.methodCall() != null) {
-                                    ret.addAll(getMethodReturnType(node, expType, curCtx.methodCall(), sourceMethod, sourceClass));
+                if(metRetTypes.size() > 0) {
+                    for (Integer expType : metRetTypes) {
+                        if(expType == null) System.out.println("null on " + expCtx.getText() + " src is " + MapleDeadlockStorage.getCanonClassName(sourceClass));
+                        if (curCtx.THIS() == null) {
+                            if(expType != -1) {
+                                if(expType != -2) {     // expType -2 means the former expression type has been excluded from the search
+                                    if(curCtx.methodCall() != null) {
+                                        Set<Integer> r = getMethodReturnType(node, expType, curCtx.methodCall(), sourceMethod, sourceClass);
+                                        ret.addAll(r);
 
-                                    if(ret.contains(-1)) {
-                                        MapleDeadlockClass c = getClassFromType(expType);
-                                        if(c != null && c.isInterface()) {  // it's an interface, there's no method implementation to be found there
-                                            ret.remove(-1);
-                                            ret.add(-2);
-                                        }
-                                    }
-
-                                    continue;
-                                } else if(curCtx.IDENTIFIER() != null) {
-                                    if(isIgnoredType(expType)) {
-                                        ret.add(-2);
-                                        continue;
-                                    }
-
-                                    MapleDeadlockClass c = getClassFromType(expType);
-                                    Set<Integer> templateTypes = null;
-
-                                    if(c == null) {
-                                        List<Integer> cTypes = mapleCompoundDataTypes.get(expType);
-                                        if(cTypes != null) {
-                                            c = getClassFromType(cTypes.get(cTypes.size() - 1));
-
-                                            if(c == null) {
-                                                //System.out.println("GFAILED @ " + cTypes.get(cTypes.size() - 1));
-                                            } else {
-                                                templateTypes = c.getMaskedTypeSet();
+                                        if(ret.contains(-1)) {
+                                            MapleDeadlockClass c = getClassFromType(expType);
+                                            if(c != null && c.isInterface()) {  // it's an interface, there's no method implementation to be found there
+                                                ret.remove(-1);
+                                                ret.add(-2);
                                             }
                                         }
 
-                                        if(c == null) {
-                                            String typeName = mapleBasicDataTypes.get(expType);
+                                        continue;
+                                    } else if(curCtx.IDENTIFIER() != null) {
+                                        if(isIgnoredType(expType)) {
+                                            ret.add(-2);
+                                            continue;
+                                        }
 
-                                            if(typeName != null && typeName.charAt(typeName.length() - 1) == ']') {
+                                        MapleDeadlockClass c = getClassFromType(expType);
+                                        Set<Integer> templateTypes = null;
+
+                                        if(c == null) {
+                                            List<Integer> cTypes = mapleCompoundDataTypes.get(expType);
+                                            if(cTypes != null) {
+                                                c = getClassFromType(cTypes.get(cTypes.size() - 1));
+
+                                                if(c == null) {
+                                                    //System.out.println("GFAILED @ " + cTypes.get(cTypes.size() - 1));
+                                                } else {
+                                                    templateTypes = c.getMaskedTypeSet();
+                                                }
+                                            }
+
+                                            if(c == null) {
+                                                String typeName = mapleBasicDataTypes.get(expType);
+
+                                                if(typeName != null && typeName.charAt(typeName.length() - 1) == ']') {
+                                                    if(curCtx.IDENTIFIER().getText().contentEquals("length")) {
+                                                        ret.add(mapleElementalTypes[0]);
+                                                        continue;
+                                                    }
+                                                }
+
+                                                //System.out.println("FAILED @ " + expType);
+                                                System.out.println("[Warning] No datatype found for " + curCtx.IDENTIFIER() + " on expression " + curCtx.getText() + " srcclass " + MapleDeadlockStorage.getCanonClassName(sourceClass) + " detected exptype " + expType);
+                                                ret.add(-2);
+                                                continue;
+                                            }
+                                        } else {
+                                            if(c.isEnum()) {    // it's an identifier defining an specific item from an enum, return self-type
                                                 if(curCtx.IDENTIFIER().getText().contentEquals("length")) {
                                                     ret.add(mapleElementalTypes[0]);
                                                     continue;
                                                 }
-                                            }
 
-                                            //System.out.println("FAILED @ " + expType);
-                                            System.out.println("[Warning] No datatype found for " + curCtx.IDENTIFIER() + " on expression " + curCtx.getText() + " srcclass " + MapleDeadlockStorage.getCanonClassName(sourceClass) + " detected exptype " + expType);
-                                            ret.add(-2);
-                                            continue;
-                                        }
-                                    } else {
-                                        if(c.isEnum()) {    // it's an identifier defining an specific item from an enum, return self-type
-                                            if(curCtx.IDENTIFIER().getText().contentEquals("length")) {
-                                                ret.add(mapleElementalTypes[0]);
+                                                ret.add(expType);
                                                 continue;
                                             }
 
+                                            templateTypes = c.getMaskedTypeSet();
+                                        }
+
+                                        String element = curCtx.IDENTIFIER().getText();
+                                        Integer type = c.getFieldVariable(element);
+                                        if(type == null) {
+                                            MapleDeadlockClass mdc = MapleDeadlockStorage.locateInternalClass(element, c);  // element could be a private class reference
+                                            if(mdc != null) {
+                                                ret.add(mapleClassDataTypeIds.get(mdc));
+                                                continue;
+                                            }
+
+                                            //System.out.println("SOMETHING OUT OF CALL FOR FIELD " + curCtx.IDENTIFIER().getText() + " ON " + MapleDeadlockStorage.getCanonClassName(c));
+                                            ret.add(-1);
+                                            continue;
+                                        }
+
+                                        ret.add(getRelevantType(type, templateTypes, c, expType));
+                                        continue;
+                                    } else if(curCtx.THIS() != null) {
+                                        ret.add(expType);
+                                        continue;
+                                    } else if(curCtx.primary() != null) {
+                                        if(curCtx.primary().CLASS() != null) {
                                             ret.add(expType);
                                             continue;
                                         }
-
-                                        templateTypes = c.getMaskedTypeSet();
                                     }
-
-                                    String element = curCtx.IDENTIFIER().getText();
-                                    Integer type = c.getFieldVariable(element);
-                                    if(type == null) {
-                                        MapleDeadlockClass mdc = MapleDeadlockStorage.locateInternalClass(element, c);  // element could be a private class reference
-                                        if(mdc != null) {
-                                            ret.add(mapleClassDataTypeIds.get(mdc));
-                                            continue;
-                                        }
-
-                                        //System.out.println("SOMETHING OUT OF CALL FOR FIELD " + curCtx.IDENTIFIER().getText() + " ON " + MapleDeadlockStorage.getCanonClassName(c));
-                                        ret.add(-1);
-                                        continue;
-                                    }
-
-                                    ret.add(getRelevantType(type, templateTypes, c, expType));
+                                } else {
+                                    ret.add(-2);
                                     continue;
-                                } else if(curCtx.THIS() != null) {
-                                    ret.add(expType);
-                                    continue;
-                                } else if(curCtx.primary() != null) {
-                                    if(curCtx.primary().CLASS() != null) {
-                                        ret.add(-2);
-                                        continue;
-                                    }
                                 }
-                            } else {
-                                ret.add(-2);
-                                continue;
                             }
+                        } else {
+                            ret.add(expType);
+                            continue;
                         }
-                    } else {
-                        ret.add(expType);
-                        continue;
                     }
+                    
+                    return ret;
                 }
             } else if(bopText.contentEquals("+")) {
                 // must decide between string concatenation of numeric data types

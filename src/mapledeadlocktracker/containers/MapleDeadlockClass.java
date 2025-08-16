@@ -118,17 +118,11 @@ public class MapleDeadlockClass {
     }
     
     public void updateImport(String s, String full, MapleDeadlockClass mdc) {
-        importList.remove(s);
-        
-        if(importList.containsKey(mdc.getName())) {
-            MapleDeadlockClass c = importList.get(mdc.getName());
-            
-            if(mdc != c) {
-                System.out.println("[CRITICAL] Overwrote import " + MapleDeadlockStorage.getCanonClassName(c) + ", defined as '" + full + "', on class " + MapleDeadlockStorage.getCanonClassName(this));
-            }
+        String cname = MapleDeadlockStorage.getCanonClassName(mdc);
+        if(!importList.containsKey(cname)) {
+            importList.put(cname, mdc);
+            importList.put(mdc.getName(), mdc);
         }
-        
-        importList.put(MapleDeadlockStorage.getCanonClassName(mdc), mdc);
         
         List<String> ls = fullImportList.get(s);
         if(ls == null) {
@@ -166,7 +160,10 @@ public class MapleDeadlockClass {
     }
     
     public MapleDeadlockClass getImport(String s) {
-        return importList.get(s);
+        if(s.contentEquals(this.getName())) return this;
+        if(importList.containsKey(s)) return importList.get(s);
+        if(this.getParent() != null) return this.getParent().getImport(s);
+        return null;
     }
     
     public void addPrivateClass(String s, MapleDeadlockClass mdc) {

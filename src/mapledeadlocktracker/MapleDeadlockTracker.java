@@ -31,10 +31,6 @@ import javaparser.*;
  */
 public class MapleDeadlockTracker {
 
-    /**
-     * @param args the command line arguments
-     */
-    
     private static void parseJavaFile(String fileName, MapleDeadlockReader listener) {
         try {
             JavaLexer lexer = new JavaLexer(CharStreams.fromFileName(fileName));
