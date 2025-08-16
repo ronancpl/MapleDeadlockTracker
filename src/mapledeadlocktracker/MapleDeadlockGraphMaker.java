@@ -536,9 +536,9 @@ public class MapleDeadlockGraphMaker {
                 for(MapleDeadlockClass sc : mapleInheritanceTree.get(c)) {
                     metImpl.add(getMethodImplementations(sc, method, expType, argTypes, mapleElementalDataTypes));
                 }
-            } else {
-                metImpl.add(getMethodImplementations(c, method, expType, argTypes, mapleElementalDataTypes));
             }
+            
+            metImpl.add(getMethodImplementations(c, method, expType, argTypes, mapleElementalDataTypes));
         }
         
         for(Pair<Pair<MapleDeadlockFunction, Set<Integer>>, Set<Pair<MapleDeadlockFunction, Set<Integer>>>> i : metImpl) {

@@ -120,11 +120,8 @@ public class MapleDeadlockClass {
     }
     
     public void updateImport(String s, String full, MapleDeadlockClass mdc) {
-        String cname = MapleDeadlockStorage.getCanonClassName(mdc);
-        if(!importList.containsKey(cname)) {
-            importList.put(cname, mdc);
-            importList.put(mdc.getName(), mdc);
-        }
+        importList.put(MapleDeadlockStorage.getCanonClassName(mdc), mdc);
+        importList.put(mdc.getName(), mdc);
         
         List<String> ls = fullImportList.get(s);
         if(ls == null) {
