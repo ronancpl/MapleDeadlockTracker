@@ -364,12 +364,16 @@ public class MapleDeadlockStorage {
         return maplePrivateClasses.get(packName).get(className);
     }
     
-    public static MapleDeadlockClass locateClass(String fullClassName, MapleDeadlockClass thisClass) {
-        if(thisClass == null || fullClassName == null) return null;
-        
+    public static MapleDeadlockClass locateClass(String className, MapleDeadlockClass thisClass) {
+        if(thisClass == null || className == null) return null;
         //System.out.println("locating "  + className + " from " + MapleDeadlockStorage.getCanonClassName(thisClass));
         
-        MapleDeadlockClass ret = locatePublicClass(fullClassName, thisClass);
+        MapleDeadlockClass ret = locateClassInternal(className, thisClass);
+        if (ret != null) return ret;
+        
+        String fullClassName = className;
+        
+        ret = locatePublicClass(fullClassName, thisClass);
         if (ret != null) return ret;
         
         ret = locatePrivateClass(fullClassName, thisClass);
