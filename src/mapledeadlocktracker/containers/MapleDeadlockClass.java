@@ -75,6 +75,8 @@ public class MapleDeadlockClass {
         
         supName = superNames;
         isAbstract = abstracted;
+        
+        importList.put(packName + "*", null);    // default import all classes from same package
     }
     
     public boolean isEnum() {

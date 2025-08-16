@@ -992,7 +992,9 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                         mdc.updateImport(importedClass.getPackageName() + importedClass.getPathName(), s, importedClass);
                     } else {
                         for(MapleDeadlockClass packClass : m.values()) {
-                            mdc.updateImport(packClass.getPackageName() + packClass.getPathName(), s, packClass);
+                            if (mdc != packClass) {
+                                mdc.updateImport(packClass.getPackageName() + packClass.getPathName(), s, packClass);
+                            }
                         }
                     }
                 } else {
@@ -1062,11 +1064,6 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                 
                 List<String> superNames = mdc.getSuperNameList();
                 for(String supName : superNames) {
-                    if(mdc2.getName().contains("AbstractMatchCheckerListener")) {
-                        int i = 0;
-                    }
-                    
-                    MapleDeadlockClass sup;
                     MapleDeadlockClass parent = mdc.getParent();
                     if(parent != null && mdc2.isInterface() && supName.contentEquals(parent.getName())) {
                         List<MapleDeadlockClass> list = mapleInheritanceTree.get(mdc2);
@@ -1074,7 +1071,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
                             list.add(parent);
                         }
                     } else {
-                        sup = mdc.getImport(supName);
+                        MapleDeadlockClass sup = mdc.getImport(supName);
                         if (mdc2 != sup && sup != null) {
                             mdc2.addSuper(sup);
 
