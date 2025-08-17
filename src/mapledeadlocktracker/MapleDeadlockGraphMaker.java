@@ -199,14 +199,16 @@ public class MapleDeadlockGraphMaker {
                     if (c != null) {
                         s = path.length();
                     } else if (s > -1) {
-                        if (i == names.length - 1 || !names[i + 1].contentEquals("*")) {
-                            importedEnums.add(names[names.length - 1]);
-                        } else {
-                            c = mapleAllClasses.get(path.substring(0, path.length() - 2));
-                            if (c.isEnum()) {
-                                MapleDeadlockEnum e1 = (MapleDeadlockEnum) c;
-                                for (String s1 : e1.getEnumItems()) {
-                                    importedEnums.add(s1);
+                        if (i == names.length - 1) {
+                            if (!names[i].contentEquals("*")) {
+                                importedEnums.add(names[names.length - 1]);
+                            } else {
+                                c = mapleAllClasses.get(path.substring(0, s));
+                                if (c.isEnum()) {
+                                    MapleDeadlockEnum e1 = (MapleDeadlockEnum) c;
+                                    for (String s1 : e1.getEnumItems()) {
+                                        importedEnums.add(s1);
+                                    }
                                 }
                             }
                         }
@@ -1197,19 +1199,31 @@ public class MapleDeadlockGraphMaker {
         return -1;
     }
     
-    private static void getAllClassesInternal(Map<String, Map<String, MapleDeadlockClass>> map) {
-        for (Entry<String, Map<String, MapleDeadlockClass>> e : map.entrySet()) {
-            String path = e.getKey() + ".";
-            
-            for (Entry<String, MapleDeadlockClass> f : e.getValue().entrySet()) {
-                mapleAllClasses.put(path + f.getKey(), f.getValue());
-            }    
+    private static void includeAllClassesInternal(Map<String, Map<String, MapleDeadlockClass>> map, boolean isPrivate) {
+        if(!isPrivate) {
+            for (Entry<String, Map<String, MapleDeadlockClass>> e : map.entrySet()) {
+                String path = e.getKey();
+
+                for (Entry<String, MapleDeadlockClass> f : e.getValue().entrySet()) {
+                    mapleAllClasses.put(path + f.getKey(), f.getValue());
+                }    
+            }
+        } else {
+            for (Entry<String, Map<String, MapleDeadlockClass>> e : map.entrySet()) {
+                String path = e.getKey();
+                int idx = path.lastIndexOf('.');
+                path = path.substring(0, idx + 1);
+
+                for (Entry<String, MapleDeadlockClass> f : e.getValue().entrySet()) {
+                    mapleAllClasses.put(path + f.getKey(), f.getValue());
+                }    
+            }
         }
     }
     
-    private static void getAllClasses() {
-        getAllClassesInternal(maplePublicClasses);
-        getAllClassesInternal(maplePrivateClasses);
+    private static void includeAllClasses() {
+        includeAllClassesInternal(maplePublicClasses, false);
+        includeAllClassesInternal(maplePrivateClasses, true);
     }
     
     public static MapleDeadlockGraph generateSourceGraph(MapleDeadlockStorage metadata) {
@@ -1220,7 +1234,7 @@ public class MapleDeadlockGraphMaker {
         maplePrivateClasses = metadata.getPrivateClasses();
         
         mapleAllClasses = new HashMap<>();
-        getAllClasses();
+        includeAllClasses();
         
         for (MapleDeadlockClass c : mapleAllClasses.values()) {
             setImportEnums(c);
