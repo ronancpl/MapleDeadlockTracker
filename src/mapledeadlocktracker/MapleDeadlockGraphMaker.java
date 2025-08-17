@@ -685,14 +685,14 @@ public class MapleDeadlockGraphMaker {
     }
     
     private static Integer getDereferencedType(String derTypeName, MapleDeadlockClass derClass) {
-        Integer defType = mapleDereferencedDataTypes.get(derTypeName);
-        if(defType != null) return defType;
+        Integer derType = mapleDereferencedDataTypes.get(derTypeName);
+        if(derType != null) return derType;
         
-        if (derClass == null) defType = mapleBasicDataTypeIds.get(derTypeName);
-        else defType = mapleClassDataTypeIds.get(derClass);
+        if (derClass == null) derType = mapleBasicDataTypeIds.get(derTypeName);
+        else derType = mapleClassDataTypeIds.get(derClass);
         
-        mapleDereferencedDataTypes.put(derTypeName, defType);
-        return defType;
+        mapleDereferencedDataTypes.put(derTypeName, derType);
+        return derType;
     }
     
     private static void skimArrayInitializer(JavaParser.ArrayInitializerContext ainiCtx, MapleDeadlockGraphMethod node, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass) {
@@ -800,6 +800,10 @@ public class MapleDeadlockGraphMaker {
     
     private static Set<Integer> parseMethodCalls(MapleDeadlockGraphMethod node, JavaParser.ExpressionContext call, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass, boolean filter) {
         JavaParser.ExpressionContext curCtx = call;
+        
+        if(curCtx.getText().contentEquals("mobClearSkillSchedulers[i].dispose()")) {
+            int i = 0;
+        }
         
         Set<Integer> ret = new HashSet<>();
         
@@ -960,32 +964,36 @@ public class MapleDeadlockGraphMaker {
             JavaParser.ExpressionContext outer = curCtx.expression(0);
             JavaParser.ExpressionContext inner = curCtx.expression(1);
             
-            int c;
-            for (c = curCtx.getChildCount() - 1; c >= 0; c--) {
-                if (!curCtx.getChild(c).getText().contentEquals("]")) {
-                    break;
-                }
-            }
-            c++;
-            
             for (Integer outerType : parseMethodCalls(node, outer, sourceMethod, sourceClass)) {
                 MapleDeadlockClass outerClass = mapleClassDataTypes.get(outerType);
                 String outerName;
                 if (outerClass != null) {
-                    outerName = outerClass.getName();
+                    outerName = MapleDeadlockStorage.getClassPath(outerClass);
                 } else {
                     outerName = mapleBasicDataTypes.get(outerType);
-
+                    
                     outerClass = MapleDeadlockStorage.locateClass(outerName, sourceClass);
                     if (outerClass != null) outerType = mapleClassDataTypeIds.get(outerClass);
                 }
-
-                for(int i = 0; i < curCtx.getChildCount() - c; i++) {
-                    outerName += "[]";
+                
+                if (curCtx.getText().contains("mobClearSkillSchedulers[i]")) {
+                    int e = 0;
                 }
-                Integer defType = getDereferencedType(outerName.substring(0,outerName.lastIndexOf('[')), outerClass);
-                ret.add(defType);
+                
+                if (outerName.endsWith("]")) outerName = outerName.substring(0, outerName.lastIndexOf("["));
+                
+                Integer derType;
+                if (outerName.endsWith("]")) {
+                    derType = getDereferencedType(outerName, outerClass);
+                } else if (mapleBasicDataTypeIds.containsKey(outerName)) {
+                    derType = mapleBasicDataTypeIds.get(outerName);
+                } else {
+                    derType = -2;
+                }
+                
+                ret.add(derType);
             }
+            
             return ret;
         } else if(curCtx.primary() != null) {
             JavaParser.PrimaryContext priCtx = curCtx.primary();
