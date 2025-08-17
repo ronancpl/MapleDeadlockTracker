@@ -598,11 +598,16 @@ public class MapleDeadlockGraphMaker {
         switch(methodName) {
             case "isEmpty":
             case "equals":
+            case "equalsIgnoreCase":
             case "contains":
                 return mapleElementalTypes[4];
             
             case "valueOf":
             case "toString":
+            case "toLowerCase":
+            case "toUpperCase":
+            case "trim":
+            case "substring":
             case "getKey":
             case "getValue":
             case "getClass":
@@ -626,11 +631,16 @@ public class MapleDeadlockGraphMaker {
     }
     
     private static Set<Integer> getMethodReturnType(MapleDeadlockGraphMethod node, Integer classType, JavaParser.MethodCallContext methodCall, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass) {
+        Set<Integer> retTypes = new HashSet<>();
+        
+        if(classType == -2) {
+            retTypes.add(-2);
+            return retTypes;
+        }
+        
         //System.out.println("CALL METHODRETURNTYPE for " + classType + " methodcall " + methodCall.getText());
         List<Integer> argTypes = getArgumentTypes(node, methodCall.expressionList(), sourceMethod, sourceClass);
         String methodName = methodCall.IDENTIFIER().getText();
-        
-        Set<Integer> retTypes = new HashSet<>();
         
         if(!mapleReflectedClasses.containsKey(classType)) {
             MapleDeadlockAbstractType absType = mapleAbstractDataTypes.get(classType);
@@ -720,7 +730,7 @@ public class MapleDeadlockGraphMaker {
 
                 String methodName = "";
                 if(call.bop != null && call.methodCall() != null) {
-                    methodName = call.methodCall().getText();
+                    methodName = call.methodCall().IDENTIFIER().getText();
                 }
 
                 if(base.contentEquals("Math")) {
