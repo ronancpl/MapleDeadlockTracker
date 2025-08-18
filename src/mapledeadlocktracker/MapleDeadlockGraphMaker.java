@@ -261,7 +261,7 @@ public class MapleDeadlockGraphMaker {
         return null;
     }
     
-    private static Integer getPrimaryType(String name, MapleDeadlockGraphMethod node, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass) {
+    private static Integer getPrimaryType(String name, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass) {
         //System.out.println("trying " + name + " on " + MapleDeadlockStorage.getCanonClassName(sourceClass));
         //System.out.println(localVars);
         
@@ -304,6 +304,8 @@ public class MapleDeadlockGraphMaker {
     }
     
     private static Integer getRelevantType(Integer retType, Set<Integer> templateTypes, MapleDeadlockClass c, Integer expType) {
+        if(retType == -2) return retType;
+        
         if(templateTypes != null && templateTypes.contains(retType)) {
             List<Integer> mTypes = c.getMaskedTypes();
             int pos;
@@ -621,6 +623,13 @@ public class MapleDeadlockGraphMaker {
             case "clone":
                 return thisType;
                 
+            case "add":
+            case "put":
+            case "clear":
+                if(mapleAbstractDataTypes.get(thisType) != MapleDeadlockAbstractType.NON_ABSTRACT) {
+                    return -2;
+                }
+                
             default:
                 if(methodName.endsWith("alue")) {   // intValue, floatValue, shortValue...
                     return -2;
@@ -801,10 +810,6 @@ public class MapleDeadlockGraphMaker {
     private static Set<Integer> parseMethodCalls(MapleDeadlockGraphMethod node, JavaParser.ExpressionContext call, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass, boolean filter) {
         JavaParser.ExpressionContext curCtx = call;
         
-        if(curCtx.getText().contentEquals("mobClearSkillSchedulers[i].dispose()")) {
-            int i = 0;
-        }
-        
         Set<Integer> ret = new HashSet<>();
         
         if(curCtx.bop != null) {
@@ -976,7 +981,7 @@ public class MapleDeadlockGraphMaker {
                     if (outerClass != null) outerType = mapleClassDataTypeIds.get(outerClass);
                 }
                 
-                if (curCtx.getText().contains("mobClearSkillSchedulers[i]")) {
+                if (curCtx.getText().contains("inventory[i]")) {
                     int e = 0;
                 }
                 
@@ -985,10 +990,15 @@ public class MapleDeadlockGraphMaker {
                 Integer derType;
                 if (outerName.endsWith("]")) {
                     derType = getDereferencedType(outerName, outerClass);
-                } else if (mapleBasicDataTypeIds.containsKey(outerName)) {
-                    derType = mapleBasicDataTypeIds.get(outerName);
                 } else {
-                    derType = -2;
+                    MapleDeadlockClass mdc = MapleDeadlockStorage.locateClass(outerName, sourceClass);
+                    if (mdc != null) {
+                        derType = mapleClassDataTypeIds.get(mdc);
+                    } else if (mapleBasicDataTypeIds.containsKey(outerName)) {
+                        derType = mapleBasicDataTypeIds.get(outerName);
+                    } else {
+                        derType = -2;
+                    }
                 }
                 
                 ret.add(derType);
@@ -999,7 +1009,7 @@ public class MapleDeadlockGraphMaker {
             JavaParser.PrimaryContext priCtx = curCtx.primary();
             
             if(priCtx.IDENTIFIER() != null) {
-                Integer r = getPrimaryType(priCtx.IDENTIFIER().getText(), node, sourceMethod, sourceClass);
+                Integer r = getPrimaryType(priCtx.IDENTIFIER().getText(), sourceMethod, sourceClass);
                 ret.add(r);
                 return ret;
             } else if(priCtx.expression() != null) {
