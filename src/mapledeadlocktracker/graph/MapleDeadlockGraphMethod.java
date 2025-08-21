@@ -44,4 +44,9 @@ public class MapleDeadlockGraphMethod {
     public List<MapleDeadlockGraphEntry> getEntryList() {
         return entryNodes;
     }
+    
+    @Override
+    public String toString() {
+        return srcName + ":" + entryNodes.size();
+    }
 }

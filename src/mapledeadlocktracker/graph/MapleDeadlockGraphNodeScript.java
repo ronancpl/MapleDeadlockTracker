@@ -15,22 +15,14 @@ package mapledeadlocktracker.graph;
  *
  * @author RonanLana
  */
-public class MapleDeadlockGraphNodeLock extends MapleDeadlockGraphNode {
-    boolean lock;
-    Integer id;
+public class MapleDeadlockGraphNodeScript extends MapleDeadlockGraphNode {
     
-    public MapleDeadlockGraphNodeLock(Integer lockid, boolean isLocking) {
-        super(-1, isLocking ? MapleDeadlockGraphNodeType.LOCK : MapleDeadlockGraphNodeType.UNLOCK, (lockid != null) ? lockid : -1);
-        lock = isLocking;
-        id = lockid;
-    }
-    
-    public Integer getLock() {
-        return id;
+    public MapleDeadlockGraphNodeScript() {
+        super(-1, MapleDeadlockGraphNodeType.SCRIPT, -1);
     }
     
     @Override
     public String toString() {
-        return (lock ? "L" : "U") + id;
+        return "SCRIPT";
     }
 }

@@ -15,14 +15,15 @@ package mapledeadlocktracker.graph;
  *
  * @author RonanLana
  */
-    
 public class MapleDeadlockGraphNode {
     int position;
+    int lockid;
     MapleDeadlockGraphNodeType type;
     
-    protected MapleDeadlockGraphNode(int pos, MapleDeadlockGraphNodeType t) {
-        position = pos;
-        type = t;
+    protected MapleDeadlockGraphNode(int pos, MapleDeadlockGraphNodeType t, int lockid) {
+        this.position = pos;
+        this.type = t;
+        this.lockid = lockid;
     }
     
     public MapleDeadlockGraphNode() {
@@ -36,6 +37,10 @@ public class MapleDeadlockGraphNode {
     
     public int getValue() {
         return position;
+    }
+    
+    public int getLockId() {
+        return lockid;
     }
     
 }

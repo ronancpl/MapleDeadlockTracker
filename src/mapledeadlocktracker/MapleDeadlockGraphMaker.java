@@ -21,6 +21,8 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javaparser.JavaParser;
 import mapledeadlocktracker.containers.MapleDeadlockClass;
 import mapledeadlocktracker.containers.MapleDeadlockEnum;
@@ -32,6 +34,7 @@ import mapledeadlocktracker.graph.MapleDeadlockAbstractType;
 import mapledeadlocktracker.graph.MapleDeadlockGraphEntry;
 import mapledeadlocktracker.graph.MapleDeadlockGraphNodeCall;
 import mapledeadlocktracker.graph.MapleDeadlockGraphNodeLock;
+import mapledeadlocktracker.graph.MapleDeadlockGraphNodeScript;
 import mapledeadlocktracker.graph.MapleDeadlockGraphMethod;
 
 /**
@@ -76,17 +79,43 @@ public class MapleDeadlockGraphMaker {
     private static Integer runningFid = 0;
     private static Integer lockId;
     
+    private static Pattern p = Pattern.compile("([\\w\\d_\\.]*)(\\[([\\w\\d_\\.]*\\]))?");
+    private static List<Pair<String,String>> scriptCalls = scriptMethods(MapleDeadlockConfig.getProperty("script_calls"));
+    
+    private static List<Pair<String,String>> scriptMethods(String methodSeq) {
+        List<Pair<String,String>> list = new LinkedList<>();
+        Matcher m = p.matcher(methodSeq);
+        while (m.find()) {
+            if (m.groupCount() > 1) {
+                list.add(new Pair<>(m.group(1), m.group(2)));
+            } else {
+                list.add(new Pair<>(m.group(1), null));
+            }
+        }
+        
+        return list;
+    }
+    
+    private static boolean isScriptCall(String methodName) {
+        for (Pair<String,String> p : scriptCalls) {
+            if (methodName.contentEquals(p.left)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
     private static List<Integer> getArgumentTypes(MapleDeadlockGraphMethod node, JavaParser.ExpressionListContext expList, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass) {
         List<Integer> ret = new LinkedList<>();
         if(expList != null) {
             for(JavaParser.ExpressionContext exp : expList.expression()) {
                 for (Integer argType : parseMethodCalls(node, exp, sourceMethod, sourceClass)) {
-                    ret.add((argType != -1 && !argType.equals(mapleElementalTypes[5])) ? argType : -2);  // make accept any non-determined argument-type
+                    ret.add((argType != -1 && !argType.equals(mapleElementalTypes[6])) ? argType : -2);  // make accept any non-determined argument-type
                 }
             }
         }
         
-        //System.out.println(" >> ret is " + ret);
         return ret;
     }
     
@@ -106,7 +135,7 @@ public class MapleDeadlockGraphMaker {
     private static Integer evaluateLockFunction(String methodName, List<Integer> argTypes, Integer dataType, MapleDeadlockGraphMethod node) {
         switch(methodName) {
             case "lock":
-            case "trylock":
+            case "tryLock":
                 //System.out.println("adding lock node " + lockId);
                 node.addGraphEntry(new MapleDeadlockGraphEntry(new MapleDeadlockGraphNodeLock(lockId, true)));
                 break;
@@ -120,7 +149,19 @@ public class MapleDeadlockGraphMaker {
         return mapleElementalTypes[4];
     }
     
-    private static Integer evaluateAbstractFunction(String methodName, List<Integer> argTypes, Integer dataType, MapleDeadlockAbstractType absType, MapleDeadlockGraphMethod node) {
+    private static Integer evaluateScriptFunction(String methodName, MapleDeadlockGraphMethod node) {
+        if (isScriptCall(methodName)) {
+            MapleDeadlockGraphEntry entry = new MapleDeadlockGraphEntry();    
+            entry.addGraphEntryPoint(new MapleDeadlockGraphNodeScript());
+
+            node.addGraphEntry(entry);
+            return -2;
+        } else {
+            return -1;
+        }
+    }
+    
+    private static Integer evaluateAbstractFunction(MapleDeadlockGraphMethod node, String methodName, List<Integer> argTypes, Integer dataType, MapleDeadlockAbstractType absType) {
         switch(absType) {
             case MAP:
                 if(methodName.contentEquals("entrySet")) {
@@ -146,6 +187,9 @@ public class MapleDeadlockGraphMaker {
             case LOCK:
                 return evaluateLockFunction(methodName, argTypes, dataType, node);
                 
+            case SCRIPT:
+                return evaluateScriptFunction(methodName, node);
+                
             case STRING:
             case OTHER:
                 return -2;
@@ -167,10 +211,21 @@ public class MapleDeadlockGraphMaker {
     }
     
     private static Integer getLockId(String identifier, MapleDeadlockClass sourceClass) {
-        String lockName = sourceClass.getPackageName() + sourceClass.getPathName() + "." + identifier;
+        String lockName = MapleDeadlockStorage.getCanonClassName(sourceClass) + "." + identifier;
         MapleDeadlockLock lock = mapleLocks.get(lockName);
         
         if(lock != null) return lock.getId();
+        
+        for(MapleDeadlockClass mdc : sourceClass.getSuperList()) {
+            Integer ret = getLockId(identifier, mdc);
+            if (ret > -1) return ret;
+        }
+        
+        if(sourceClass.getParent() != null) {
+            Integer ret = getLockId(identifier, sourceClass.getParent());
+            if (ret > -1) return ret;
+        }
+        
         return -1;
     }
     
@@ -272,7 +327,9 @@ public class MapleDeadlockGraphMaker {
             if(t == null) {
                 // maybe basic types
                 t = mapleBasicDataTypeIds.get(name);
-                if(t != null) return t;
+                if(t != null && !t.equals(mapleElementalTypes[5])) {
+                    return t;
+                }
                 
                 // maybe class-based types
                 MapleDeadlockClass mdc = MapleDeadlockStorage.locateClass(name, sourceClass);
@@ -295,8 +352,7 @@ public class MapleDeadlockGraphMaker {
             return -1;
         }
         
-        MapleDeadlockAbstractType absType = mapleAbstractDataTypes.get(t);
-        if(absType != null && absType == MapleDeadlockAbstractType.LOCK) {
+        if(t.equals(mapleElementalTypes[5])) {
             lockId = getLockId(name, sourceClass);
         }
         
@@ -332,7 +388,7 @@ public class MapleDeadlockGraphMaker {
         if(ctx.CHAR_LITERAL() != null) return mapleElementalTypes[2];
         if(ctx.STRING_LITERAL() != null) return mapleElementalTypes[3];
         if(ctx.BOOL_LITERAL() != null) return mapleElementalTypes[4];
-        if(ctx.NULL_LITERAL() != null) return mapleElementalTypes[5];
+        if(ctx.NULL_LITERAL() != null) return mapleElementalTypes[6];
         
         return -1;
     }
@@ -568,18 +624,20 @@ public class MapleDeadlockGraphMaker {
             System.out.println("[Warning] EMPTY method node: " + methodCall.getText() + " @ " + method + " from " + MapleDeadlockStorage.getCanonClassName(c));
         }
         
-        for(List<Pair<MapleDeadlockFunction, Set<Integer>>> mi : allMethodImplementations) {
-            MapleDeadlockGraphEntry entry = new MapleDeadlockGraphEntry();
-            
-            for(Pair<MapleDeadlockFunction, Set<Integer>> mip : mi) {
-                MapleDeadlockFunction mdf = mip.left;
-                //Set<Integer> tt = mi.right;
+        if (!allMethodImplementations.isEmpty()) {
+            for(List<Pair<MapleDeadlockFunction, Set<Integer>>> mi : allMethodImplementations) {
+                MapleDeadlockGraphEntry entry = new MapleDeadlockGraphEntry();
 
-                Integer fid = mapleGraphFunctionIds.get(mdf);
-                entry.addGraphEntryPoint(new MapleDeadlockGraphNodeCall(fid));
+                for(Pair<MapleDeadlockFunction, Set<Integer>> mip : mi) {
+                    MapleDeadlockFunction mdf = mip.left;
+                    //Set<Integer> tt = mi.right;
+
+                    Integer fid = mapleGraphFunctionIds.get(mdf);
+                    entry.addGraphEntryPoint(new MapleDeadlockGraphNodeCall(fid));
+                }
+                
+                node.addGraphEntry(entry);
             }
-            
-            node.addGraphEntry(entry);
         }
         
         Set<Integer> retTypes = new HashSet<>();
@@ -622,6 +680,9 @@ public class MapleDeadlockGraphMaker {
             
             case "clone":
                 return thisType;
+            
+            case "invokeFunction":
+                return -2;
                 
             case "add":
             case "put":
@@ -654,7 +715,7 @@ public class MapleDeadlockGraphMaker {
         if(!mapleReflectedClasses.containsKey(classType)) {
             MapleDeadlockAbstractType absType = mapleAbstractDataTypes.get(classType);
             if(absType != null) {
-                Integer ret = evaluateAbstractFunction(methodName, argTypes, classType, absType, node);
+                Integer ret = evaluateAbstractFunction(node, methodName, argTypes, classType, absType);
                 retTypes.add(ret);
                 
                 //if(ret == -1 && absType != MapleDeadlockAbstractType.LOCK) System.out.println("SOMETHING OUT OF CALL FOR " + methodCall.IDENTIFIER().getText() + " ON " + absType /*+ dataNames.get(expType)*/);
@@ -675,6 +736,15 @@ public class MapleDeadlockGraphMaker {
             if(methodName.contentEquals("toString")) {
                 retTypes.add(mapleElementalTypes[3]);
             } else {
+                MapleDeadlockAbstractType absType = mapleAbstractDataTypes.get(classType);
+                if(absType != null && absType == MapleDeadlockAbstractType.LOCK) {
+                    Integer ret = evaluateAbstractFunction(node, methodName, argTypes, classType, absType);
+                    retTypes.add(ret);
+
+                    //if(ret == -1 && absType != MapleDeadlockAbstractType.LOCK) System.out.println("SOMETHING OUT OF CALL FOR " + methodCall.IDENTIFIER().getText() + " ON " + absType /*+ dataNames.get(expType)*/);
+                    return retTypes;
+                }
+                
                 Integer ret = reflectedData.right.get(methodName);
                 if(ret == null) ret = reflectedData.left;
                 retTypes.add(ret);
@@ -887,9 +957,10 @@ public class MapleDeadlockGraphMaker {
 
                                             templateTypes = c.getMaskedTypeSet();
                                         }
-
+                                        
                                         String element = curCtx.IDENTIFIER().getText();
-                                        Integer type = c.getFieldVariable(element);
+                                        
+                                        Integer type = getPrimaryTypeOnFieldVars(element, c);
                                         if(type == null) {
                                             MapleDeadlockClass mdc = MapleDeadlockStorage.locateInternalClass(element, c);  // element could be a private class reference
                                             if(mdc != null) {
@@ -979,10 +1050,6 @@ public class MapleDeadlockGraphMaker {
                     
                     outerClass = MapleDeadlockStorage.locateClass(outerName, sourceClass);
                     if (outerClass != null) outerType = mapleClassDataTypeIds.get(outerClass);
-                }
-                
-                if (curCtx.getText().contains("inventory[i]")) {
-                    int e = 0;
                 }
                 
                 if (outerName.endsWith("]")) outerName = outerName.substring(0, outerName.lastIndexOf("["));
@@ -1346,6 +1413,14 @@ public class MapleDeadlockGraphMaker {
         
         s += "]";
         return s;
+    }
+    
+    public static Map<MapleDeadlockFunction, MapleDeadlockGraphMethod> getGraphEntries() {
+        return mapleGraphFunctions;
+    }
+    
+    public static Map<String, MapleDeadlockLock> getGraphLocks() {
+        return mapleLocks;
     }
     
     public static void dumpMemory() {

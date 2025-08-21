@@ -20,7 +20,8 @@ public enum MapleDeadlockGraphNodeType {
     CALL((byte) 0),
     LOCK((byte) 1),
     UNLOCK((byte) 2),
-    END((byte) 3);
+    SCRIPT((byte) 3),
+    END((byte) 4);
 
     private final byte i;
 

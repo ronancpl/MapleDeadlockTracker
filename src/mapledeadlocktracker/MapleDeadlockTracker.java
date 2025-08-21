@@ -17,6 +17,10 @@ import mapledeadlocktracker.containers.MapleDeadlockStorage;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 
 import org.antlr.v4.runtime.*;
@@ -24,6 +28,7 @@ import org.antlr.v4.runtime.tree.*;
 
 import javalexer.*;
 import javaparser.*;
+import mapledeadlocktracker.containers.MapleDeadlockLock;
 
 /**
  *
@@ -77,21 +82,45 @@ public class MapleDeadlockTracker {
         return MapleDeadlockReader.compileProjectData();     // finally, updates the storage table with relevant associations
     }
     
-    public static void main(String[] args) {
-        MapleDeadlockStorage md = parseJavaProject("../HeavenMS/src");
-        System.out.println("Project parse complete!\n");
+    private static void loadPropertiesFile() {
+        Properties prop = new Properties();
+        String fileName = "config.cfg";
+        try (FileInputStream fis = new FileInputStream(fileName)) {
+            prop.load(fis);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
         
-        System.out.println(md);
+        MapleDeadlockConfig.loadProperties(prop);
+    }
+    
+    private static Map<Integer, String> getGraphLockNames() {
+        Map<Integer, String> r = new HashMap<>();
+        
+        Map<String, MapleDeadlockLock> m = MapleDeadlockGraphMaker.getGraphLocks();
+        for (Entry<String, MapleDeadlockLock> em : m.entrySet()) {
+            if(em.getValue() != null) r.put(em.getValue().getId(), em.getKey());
+        }
+        
+        return r;
+    }
+    
+    public static void main(String[] args) {
+        loadPropertiesFile();
+        
+        MapleDeadlockStorage md = parseJavaProject(MapleDeadlockConfig.getProperty("src_folder"));
+        System.out.println("Project parse complete!\n");
         
         MapleDeadlockGraph mdg = MapleDeadlockGraphMaker.generateSourceGraph(md);
         System.out.println("Project graph generated!\n");
         
-        Set<MapleDeadlockEntry> mds = new MapleDeadlockGraphCruiser().runSourceGraph(mdg);
-        MapleDeadlockGraphResult.reportDeadlocks(mds);
+        Map<Integer, String> r = getGraphLockNames();
+        Set<MapleDeadlockEntry> mds = new MapleDeadlockGraphCruiser().runSourceGraph(mdg, r);
+        MapleDeadlockGraphResult.reportDeadlocks(mds, r);
         
         /*
         MapleDeadlockGraphMaker.dumpGraph();
-                
+        
         Map<String, Map<String, MapleDeadlockClass>> map = md.getPublicClasses();
         
         MapleDeadlockClass tracker = map.get("mapledeadlocktracker.graph.").get("MapleDeadlockGraphLock");
@@ -102,7 +131,6 @@ public class MapleDeadlockTracker {
         System.out.println(md.locateClass("JavaParserBaseListener", parser).getName());
         System.out.println(md.locateClass("MapleDeadlockFunction", grapher).getName());
         */
-        
         
     }
 }

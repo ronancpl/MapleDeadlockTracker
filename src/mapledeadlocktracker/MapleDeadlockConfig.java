@@ -9,22 +9,24 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package mapledeadlocktracker.graph;
+package mapledeadlocktracker;
+
+import java.util.Properties;
 
 /**
  *
  * @author RonanLana
  */
-public class MapleDeadlockGraphNodeCall extends MapleDeadlockGraphNode {
-    Integer callFid;
+public class MapleDeadlockConfig {
     
-    public MapleDeadlockGraphNodeCall(Integer fid) {
-        super(fid, MapleDeadlockGraphNodeType.CALL, -1);
-        callFid = fid;
+    private static Properties prop;
+        
+    public static String getProperty(String key) {
+        return prop.getProperty(key);
     }
     
-    @Override
-    public String toString() {
-        return "C" + callFid;
+    public static void loadProperties(Properties properties) {
+        prop = properties;
     }
+    
 }

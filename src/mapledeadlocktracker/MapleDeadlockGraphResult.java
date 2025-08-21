@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import mapledeadlocktracker.containers.MapleDeadlockEntry;
 import mapledeadlocktracker.containers.MapleDeadlockFunction;
@@ -22,7 +23,7 @@ import mapledeadlocktracker.containers.MapleDeadlockStorage;
 
 /**
  *
- * @author Ronan Lana
+ * @author RonanLana
  */
 public class MapleDeadlockGraphResult {
     
@@ -43,12 +44,14 @@ public class MapleDeadlockGraphResult {
         return MapleDeadlockStorage.getCanonClassName(e.getSourceClass()) + "@" + e.getName();
     }
     
-    public static void reportDeadlocks(Set<MapleDeadlockEntry> deadlocksSet) {
+    public static void reportDeadlocks(Set<MapleDeadlockEntry> deadlocksSet, Map<Integer, String> mapleLockNames) {
         System.out.println("List of deadlocks:");
         
         List<MapleDeadlockEntry> deadlocks = sortDeadlockEntries(deadlocksSet);
         for (MapleDeadlockEntry e : deadlocks) {
-            System.out.println("  >> " + getCanonicalFunctionPath(e.getFunction1()) + " " + getCanonicalFunctionPath(e.getFunction2()));
+            System.out.println(mapleLockNames.get(e.getLockId1()) + " <-> " + mapleLockNames.get(e.getLockId2()));
+            System.out.println(" >> " + getCanonicalFunctionPath(e.getFunction1()) + " " + getCanonicalFunctionPath(e.getFunction2()));
+            System.out.println();
         }
     }
     

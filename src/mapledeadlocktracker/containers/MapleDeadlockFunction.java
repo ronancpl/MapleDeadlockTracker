@@ -25,32 +25,32 @@ import javaparser.JavaParser;
  * @author RonanLana
  */
 public class MapleDeadlockFunction {
-    static Map<Integer, List<Integer>> compoundTypes;
-    static Map<Integer, Integer> elementalTypes;
-    static Map<Integer, Set<Integer>> superTypes;
-    static Set<Integer> enumTypes;
-    static Pair<Integer, Integer> ignoredRange;
-    static Integer intType;
+    private static Map<Integer, List<Integer>> compoundTypes;
+    private static Map<Integer, Integer> elementalTypes;
+    private static Map<Integer, Set<Integer>> superTypes;
+    private static Set<Integer> enumTypes;
+    private static Pair<Integer, Integer> ignoredRange;
+    private static Integer intType;
     
-    int id;
-    String name;
-    boolean isAbstract;
-    boolean isEllipsis = false;
+    private int id;
+    private String name;
+    private boolean isAbstract;
+    private boolean isEllipsis = false;
     
-    MapleDeadlockClass source;
-    MapleDeadlockFunction parent;
+    private MapleDeadlockClass source;
+    private MapleDeadlockFunction parent;
     
-    Set<MapleDeadlockLock> locks;
+    private Set<MapleDeadlockLock> locks;
     
-    Map<Long, List<Integer>> volatileLocalVars = new HashMap<>();
-    Map<Long, Set<Integer>> localVars = new HashMap();
-    Map<Long, String> localVarNames = new HashMap();
-    Map<Long, Integer> paramVars;
+    private Map<Long, List<Integer>> volatileLocalVars = new HashMap<>();
+    private Map<Long, Set<Integer>> localVars = new HashMap();
+    private Map<Long, String> localVarNames = new HashMap();
+    private Map<Long, Integer> paramVars;
     
-    List<JavaParser.ExpressionContext> methodCalls = new LinkedList<>();   // starts off as a string representing the call, after the source readings it will be parsed
+    private List<JavaParser.ExpressionContext> methodCalls = new LinkedList<>();   // starts off as a string representing the call, after the source readings it will be parsed
     
-    List<Integer> paramTypes;
-    Integer returnType;
+    private List<Integer> paramTypes;
+    private Integer returnType;
     
     public MapleDeadlockFunction(String functName, MapleDeadlockClass mdc, MapleDeadlockFunction par, boolean abstracted) {
         name = functName;

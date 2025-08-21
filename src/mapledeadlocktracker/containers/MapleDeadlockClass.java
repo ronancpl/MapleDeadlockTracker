@@ -51,7 +51,7 @@ public class MapleDeadlockClass {
     Map<String, MapleDeadlockClass> importList = new HashMap<>();   // holds solely the class name
     Map<String, List<String>> fullImportList = new HashMap<>();
     
-    List<MapleDeadlockFunction> methods = new ArrayList<>();
+    Map<String, MapleDeadlockFunction> methods = new HashMap<>();
     Map<String, Integer> fields = new HashMap();
     
     public MapleDeadlockClass(MapleDeadlockClassType ctype, String className, String packageName, String classPathName, List<String> superNames, boolean abstracted, MapleDeadlockClass parentClass) {
@@ -187,11 +187,15 @@ public class MapleDeadlockClass {
     }
     
     public void addClassMethod(MapleDeadlockFunction classMethod) {
-        methods.add(classMethod);
+        methods.put(classMethod.getName(), classMethod);
+    }
+    
+    public MapleDeadlockFunction getMethodByName(String name) {
+        return methods.get(name);
     }
     
     public List<MapleDeadlockFunction> getMethods() {
-        return methods;
+        return new ArrayList<>(methods.values());
     }
     
     public String getName() {
@@ -227,7 +231,7 @@ public class MapleDeadlockClass {
     public List<List<Integer>> getArgsFromMethodName(String name) {
         List<List<Integer>> ret = new LinkedList();
         
-        for(MapleDeadlockFunction mdf : methods) {
+        for(MapleDeadlockFunction mdf : methods.values()) {
             if(mdf.getName().contentEquals(name)) {
                 ret.add(mdf.getParameters());
             }
@@ -271,7 +275,7 @@ public class MapleDeadlockClass {
     public MapleDeadlockFunction getMethod(boolean checkSuper, String name, List<Integer> params) {
         MapleDeadlockFunction ref = null;
         
-        for(MapleDeadlockFunction mdf : methods) {
+        for(MapleDeadlockFunction mdf : methods.values()) {
             byte exactState = mdf.hasExactHeading(name, params);
             
             if(exactState == 1) {
@@ -289,7 +293,7 @@ public class MapleDeadlockClass {
     }
     
     public MapleDeadlockFunction getTemplateMethod(boolean checkSuper, String name, List<Integer> params) {
-        for(MapleDeadlockFunction mdf : methods) {
+        for(MapleDeadlockFunction mdf : methods.values()) {
             if(mdf.hasSimilarHeading(name, params)) {
                 return mdf;
             }
@@ -316,7 +320,7 @@ public class MapleDeadlockClass {
             else s += "NULL_" + c.getKey() + " ";
         }
         s += "\nMETHODS: ";
-        for(MapleDeadlockFunction mdf : methods) {
+        for(MapleDeadlockFunction mdf : methods.values()) {
             s += (mdf.toString() + " ");
         }
         s += "\nFIELD VARS: ";

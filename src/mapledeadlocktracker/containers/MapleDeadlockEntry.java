@@ -13,7 +13,7 @@ package mapledeadlocktracker.containers;
 
 /**
  *
- * @author Ronan Lana
+ * @author RonanLana
  */
 public class MapleDeadlockEntry {
         

@@ -31,6 +31,7 @@ import mapledeadlocktracker.containers.MapleDeadlockFunction;
 import mapledeadlocktracker.containers.MapleDeadlockLock;
 import mapledeadlocktracker.containers.MapleDeadlockStorage;
 import mapledeadlocktracker.containers.Pair;
+import mapledeadlocktracker.graph.MapleDeadlockAbstractType;
 import mapledeadlocktracker.strings.MapleIgnoredTypes;
 import mapledeadlocktracker.strings.MapleLinkedTypes;
 import mapledeadlocktracker.strings.MapleReflectedTypes;
@@ -836,52 +837,15 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
             }
         }
         
-        return null;
-    }
-    
-    private static Byte getLockStatementType(String stmt) {
-        switch(stmt) {
-            case "unlock":
-                return 0;
-
-            case "lock":
-                return 1;
-            
-            case "trylock":
-                return 2;
-                
-            default:    // unknown type
-                return -1;
-        }
-    }
-    
-    private static Pair<String, Byte> captureLockStatement(JavaParser.ExpressionContext ctx) {
-        if(ctx != null) {
-            String lockName;
-            
-            if(ctx.getText().contains("lock(")) {     // this is a lock/unlock statement
-                lockName = captureInitializer(ctx);
-
-                if(lockName != null) {
-                    JavaParser.MethodCallContext stmt = (JavaParser.MethodCallContext) ctx.getChild(2);
-                    Byte type = getLockStatementType(stmt.IDENTIFIER().getText());
-                    
-                    if(type > -1) {
-                        return new Pair<>(lockName, type);
-                    }
-                }
-            }
-        }
-        
-        return null;
+        return "";
     }
     
     private static void processLock(String typeText, String name, String reference) {
         boolean isRead = typeText.contains("Read");
         boolean isWrite = typeText.contains("Write");
 
-        String lockName = currentClass.getPackageName() + currentClass.getPathName() + "." + name;
-        String  refName = currentClass.getPackageName() + currentClass.getPathName() + "." + reference;
+        String lockName = MapleDeadlockStorage.getCanonClassName(currentClass) + "." + name;
+        String  refName = MapleDeadlockStorage.getCanonClassName(currentClass) + "." + reference;
         
         //System.out.println("Parsing lock : '" + typeText + "' name: '" + lockName + "' ref: '" + refName + "'");
         
@@ -1161,6 +1125,10 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
             return mapleBasicDataTypes.get("Object");
         }
         
+        if (MapleDeadlockAbstractType.getValue(t) == MapleDeadlockAbstractType.LOCK) {
+            return mapleElementalTypes[5];
+        }
+        
         try {
             targetClass = pc.getImport(t);
             if (targetClass == null) {
@@ -1388,7 +1356,8 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         mapleElementalTypes[2] = mapleBasicDataTypes.get("char");
         mapleElementalTypes[3] = mapleBasicDataTypes.get("String");
         mapleElementalTypes[4] = mapleBasicDataTypes.get("boolean");
-        mapleElementalTypes[5] = mapleBasicDataTypes.get("null");
+        mapleElementalTypes[5] = mapleBasicDataTypes.get("Lock");
+        mapleElementalTypes[6] = mapleBasicDataTypes.get("null");
         
         for(Pair<String, String> p : MapleLinkedTypes.getLinkedTypes()) {
             linkElementalDataTypes(p.left, p.right);
@@ -1448,6 +1417,12 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         customClasses.clear();
     }
     
+    private static void referenceReadWriteLocks() {
+        for (Entry<String, MapleDeadlockLock> e : mapleReadWriteLocks.entrySet()) {
+            mapleLocks.put(e.getKey(), e.getValue());
+        }
+    }
+    
     public static MapleDeadlockStorage compileProjectData() {
         //System.out.println(storage);
         
@@ -1466,6 +1441,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         parseSuperClasses(m);
         
         referenceCustomClasses();
+        referenceReadWriteLocks();
         
         /*
         for(Entry<Integer, Pair<String, String>> v : volatileDataTypes.entrySet()) {
@@ -1488,11 +1464,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         
         solveRunnableFunctions();
         
-        /*
-        for(MapleDeadlockFunction v : mapleRunnableMethods) {
-            System.out.println(v);
-        }
-        */
+        
         
         return storage;
     }

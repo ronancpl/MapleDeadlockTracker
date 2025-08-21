@@ -27,6 +27,7 @@ public enum MapleDeadlockAbstractType {
     LOCK(5),
     PRIORITYQUEUE(6),
     REFERENCE(7),
+    SCRIPT(19),
     OTHER(20);
 
     private final int i;
@@ -97,6 +98,9 @@ public enum MapleDeadlockAbstractType {
             case "StringBuilder":
             case "String":
                 return MapleDeadlockAbstractType.STRING;
+                
+            case "NashornScriptEngine":
+                return MapleDeadlockAbstractType.SCRIPT;
                 
             default:
                 if(MapleIgnoredTypes.isDataTypeIgnored(typeName)) {
