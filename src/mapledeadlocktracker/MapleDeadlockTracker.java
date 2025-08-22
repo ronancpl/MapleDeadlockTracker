@@ -118,19 +118,7 @@ public class MapleDeadlockTracker {
         Set<MapleDeadlockEntry> mds = new MapleDeadlockGraphCruiser().runSourceGraph(mdg, r);
         MapleDeadlockGraphResult.reportDeadlocks(mds, r);
         
-        /*
-        MapleDeadlockGraphMaker.dumpGraph();
-        
-        Map<String, Map<String, MapleDeadlockClass>> map = md.getPublicClasses();
-        
-        MapleDeadlockClass tracker = map.get("mapledeadlocktracker.graph.").get("MapleDeadlockGraphLock");
-        MapleDeadlockClass parser = map.get("mapledeadlocktracker.").get("MapleDeadlockReader");
-        MapleDeadlockClass grapher = map.get("mapledeadlocktracker.").get("MapleDeadlockGraphMaker");
-        
-        System.out.println(md.locateClass("MapleDeadlockGraphNode", tracker).getName());
-        System.out.println(md.locateClass("JavaParserBaseListener", parser).getName());
-        System.out.println(md.locateClass("MapleDeadlockFunction", grapher).getName());
-        */
+        //MapleDeadlockGraphMaker.dumpGraph();
         
     }
 }

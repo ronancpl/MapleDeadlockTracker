@@ -26,7 +26,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import mapledeadlocktracker.containers.MapleDeadlockEntry;
 import mapledeadlocktracker.containers.MapleDeadlockFunction;
-import mapledeadlocktracker.containers.MapleDeadlockLock;
 import mapledeadlocktracker.containers.MapleDeadlockStorage;
 import mapledeadlocktracker.containers.Pair;
 import mapledeadlocktracker.graph.MapleDeadlockGraphEntry;
@@ -53,10 +52,21 @@ public class MapleDeadlockGraphCruiser {
         
         Integer lockId;
         MapleDeadlockFunction function;
+        Integer count;
         
         private FunctionLockElement(Integer lockId, MapleDeadlockFunction function) {
             this.lockId = lockId;
             this.function = function;
+            this.count = 1;
+        }
+        
+        protected void increment() {
+            this.count += 1;
+        }
+        
+        protected boolean decrementAndZero() {
+            this.count -= 1;
+            return this.count <= 0;
         }
         
     }
@@ -113,7 +123,7 @@ public class MapleDeadlockGraphCruiser {
             locks.addAll(ongoingLocks);
 
             acqLocks.clear();
-            acqLocks.addAll(trace.seqLocks);
+            acqLocks.addAll(trace.seqAcqLocks);
         }    
         
         uptrace.seqLocks = uptrace.seqLocks.subList(0, Math.min(uptrace.seqLocks.size(), trace.seqLocks.size()));
@@ -235,41 +245,67 @@ public class MapleDeadlockGraphCruiser {
     }
     
     private static int fetchUnlockIndex(List<Integer> fl, int lockId, int idx, int n) {
-        int c = 0;
-        for (int i = idx + 1; i < fl.size(); i++) {
-            if (fl.get(i) == lockId) {
-                c++;
-            } else if (fl.get(i) == -lockId) {
-                if (c == 0) {
-                    return i;
-                }
-                
-                c--;
+        for (int i = idx; i < fl.size(); i++) {
+            if (fl.get(i) == -lockId) {
+                return i;
             }
         }
         
         return n;   // in the end of who knows when
     }
     
+    private void incrementLockInFunction(Integer i, Integer k, MapleDeadlockFunction nf) {
+        Map<Integer, FunctionLockElement> locks = lockDependencies.get(i);
+        if (locks == null) {
+            locks = new HashMap<>();
+            lockDependencies.put(i, locks);
+        }
+        
+        if (locks.containsKey(k)) {
+            locks.get(k).increment();
+        } else {
+            locks.put(k, new FunctionLockElement(k, nf));
+        }
+    }
+    
+    private void decrementLockInFunction(Integer i, Integer k) {
+        Map<Integer, FunctionLockElement> locks = lockDependencies.get(i);
+        if (locks != null && locks.get(-k) != null) {
+            if (locks.get(-k).decrementAndZero()) {
+                locks.remove(-k);
+                if (locks.isEmpty()) {
+                    lockDependencies.remove(i);
+                }
+            }
+        }
+    }
+    
     private void fetchLockDependenciesInFunction(MapleDeadlockFunction f, MapleDeadlockFunction nf, FunctionPathNode n) {
         List<Integer> fl = functionLocks.get(f).seqAcqLocks;
         for (int a = 0; a < fl.size(); a++) {
             Integer i = fl.get(a);  // lockId
-            
             if (i > 0) {
-                int j = fetchUnlockIndex(fl, i, a, n.seqAcqLocks.size()), h = 0;
-                for (h = a + 1; h < j; h++) {
-                    Integer k = n.seqAcqLocks.get(h);
+                incrementLockInFunction(i, i, nf);
+                
+                int j = fetchUnlockIndex(fl, i, a + 1, fl.size());
+                for (int h = a + 1; h < j; h++) {
+                    Integer k = fl.get(h);
                     if (k > 0) {
-                        Map<Integer, FunctionLockElement> locks = lockDependencies.get(i);
-                        if (locks == null) {
-                            locks = new HashMap<>();
-                            lockDependencies.put(k, locks);
+                        int c = fetchUnlockIndex(fl, k, h, fl.size());
+                        if (c > j) {
+                            for (int m = h; m < j; m++) {
+                                Integer g = fl.get(m);
+                                if (g > 0) {
+                                    incrementLockInFunction(i, g, nf);
+                                } else if (g < 0) {
+                                    decrementLockInFunction(i, g);
+                                }
+                            }
                         }
-
-                        locks.put(k, new FunctionLockElement(k, nf));
                     }
                 }
+            } else if (i < 0) {
+                decrementLockInFunction(-i, -i);
             }
         }
     }
