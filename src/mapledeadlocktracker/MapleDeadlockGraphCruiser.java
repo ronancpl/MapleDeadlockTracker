@@ -124,9 +124,21 @@ public class MapleDeadlockGraphCruiser {
 
             acqLocks.clear();
             acqLocks.addAll(trace.seqAcqLocks);
-        }    
+        }
         
-        uptrace.seqLocks = uptrace.seqLocks.subList(0, Math.min(uptrace.seqLocks.size(), trace.seqLocks.size()));
+        List<Integer> list = new ArrayList<>(trace.seqLocks);
+        List<Integer> toRemove = new LinkedList<>();
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i) <= 0) {
+                toRemove.add(i);
+            }
+        }
+        for (int i = toRemove.size() - 1; i >= 0; i++) {
+            list.remove(i);
+        }
+        
+        uptrace.seqAcqLocks = list;
+        uptrace.seqLocks = trace.seqLocks.subList(0, Math.min(uptrace.seqLocks.size(), trace.seqLocks.size()));
     }
     
     private static void sourceGraphFunctionLock(int lockId, FunctionPathNode ongoingLocks) {
