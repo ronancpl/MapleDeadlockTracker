@@ -133,8 +133,8 @@ public class MapleDeadlockGraphCruiser {
                 toRemove.add(i);
             }
         }
-        for (int i = toRemove.size() - 1; i >= 0; i++) {
-            list.remove(i);
+        for (int i = toRemove.size() - 1; i >= 0; i--) {
+            list.remove(toRemove.get(i));
         }
         
         uptrace.seqAcqLocks = list;

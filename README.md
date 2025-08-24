@@ -13,3 +13,7 @@ It's a developer tool designed to pick and line potential deadlock issues throug
 * The result of the search should be found in the console.
 
 Contents such as code entry points and source directory (and subdirectories) to search are configured within the __config.cfg__ file.
+
+## Observation
+
+This program does a static review over the source code. Object interactions are not treated dynamically, here.
