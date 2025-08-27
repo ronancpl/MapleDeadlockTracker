@@ -12,7 +12,9 @@
 package mapledeadlocktracker.strings;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import mapledeadlocktracker.containers.Pair;
 
 /**
@@ -20,58 +22,67 @@ import mapledeadlocktracker.containers.Pair;
  * @author RonanLana
  */
 public class MapleLinkedTypes {
+    
+    private static final Map<String, String> linkedTable = new HashMap<>();
     private static final List<Pair<String, String>> linked = new ArrayList<>();
     
-    static {
-        linked.add(instantiateDataLink("Boolean", "boolean"));
-        linked.add(instantiateDataLink("Character", "char"));
-        linked.add(instantiateDataLink("Float", "int"));
-        linked.add(instantiateDataLink("Double", "int"));
-        linked.add(instantiateDataLink("Byte", "int"));
-        linked.add(instantiateDataLink("Integer", "int"));
-        linked.add(instantiateDataLink("Short", "int"));
-        linked.add(instantiateDataLink("Long", "int"));
-        
-        linked.add(instantiateDataLink("float", "int"));
-        linked.add(instantiateDataLink("double", "int"));
-        linked.add(instantiateDataLink("byte", "int"));
-        linked.add(instantiateDataLink("short", "int"));
-        linked.add(instantiateDataLink("long", "int"));
-        linked.add(instantiateDataLink("StringBuilder", "String"));
-        linked.add(instantiateDataLink("StringBuffer", "String"));
-        
-        linked.add(instantiateDataLink("Set", "Set"));
-        linked.add(instantiateDataLink("LinkedHashSet", "Set"));
-        linked.add(instantiateDataLink("HashSet", "Set"));
-        
-        linked.add(instantiateDataLink("List", "List"));
-        linked.add(instantiateDataLink("LinkedList", "List"));
-        linked.add(instantiateDataLink("ArrayList", "List"));
-        linked.add(instantiateDataLink("Deque", "List"));
-        linked.add(instantiateDataLink("Queue", "List"));
-        
-        linked.add(instantiateDataLink("Entry", "Object"));
-        linked.add(instantiateDataLink("Exception", "Object"));
-        
-        linked.add(instantiateDataLink("Map", "Map"));
-        linked.add(instantiateDataLink("LinkedHashMap", "Map"));
-        linked.add(instantiateDataLink("HashMap", "Map"));
-        linked.add(instantiateDataLink("EnumMap", "Map"));
-        linked.add(instantiateDataLink("EnumMap", "Map"));
-        linked.add(instantiateDataLink("AbstractMap", "Map"));
-        
-        linked.add(instantiateDataLink("ReentrantReadWriteLock", "Lock"));
-        linked.add(instantiateDataLink("ReentrantLock", "Lock"));
-        linked.add(instantiateDataLink("ReadWriteLock", "Lock"));
-        linked.add(instantiateDataLink("ReadLock", "Lock"));
-        linked.add(instantiateDataLink("WriteLock", "Lock"));
+    private static void instantiateDataLink(String link, String target) {
+        linked.add(new Pair<>(link, target));
+        linkedTable.put(link, target);
     }
     
-    private static Pair<String, String> instantiateDataLink(String link, String target) {
-        return new Pair<>(link, target);
+    static {
+        instantiateDataLink("Boolean", "boolean");
+        instantiateDataLink("Character", "char");
+        instantiateDataLink("Float", "int");
+        instantiateDataLink("Double", "int");
+        instantiateDataLink("Byte", "int");
+        instantiateDataLink("Integer", "int");
+        instantiateDataLink("Short", "int");
+        instantiateDataLink("Long", "int");
+        
+        instantiateDataLink("float", "int");
+        instantiateDataLink("double", "int");
+        instantiateDataLink("byte", "int");
+        instantiateDataLink("short", "int");
+        instantiateDataLink("long", "int");
+        instantiateDataLink("StringBuilder", "String");
+        instantiateDataLink("StringBuffer", "String");
+        
+        instantiateDataLink("Set", "Set");
+        instantiateDataLink("LinkedHashSet", "Set");
+        instantiateDataLink("HashSet", "Set");
+        
+        instantiateDataLink("List", "List");
+        instantiateDataLink("LinkedList", "List");
+        instantiateDataLink("ArrayList", "List");
+        instantiateDataLink("Deque", "List");
+        instantiateDataLink("Queue", "List");
+        
+        instantiateDataLink("Entry", "Object");
+        instantiateDataLink("Exception", "Object");
+        
+        instantiateDataLink("Map", "Map");
+        instantiateDataLink("LinkedHashMap", "Map");
+        instantiateDataLink("HashMap", "Map");
+        instantiateDataLink("EnumMap", "Map");
+        instantiateDataLink("EnumMap", "Map");
+        instantiateDataLink("AbstractMap", "Map");
+        
+        instantiateDataLink("ReentrantReadWriteLock", "Lock");
+        instantiateDataLink("ReentrantLock", "Lock");
+        instantiateDataLink("ReadWriteLock", "Lock");
+        instantiateDataLink("ReadLock", "Lock");
+        instantiateDataLink("WriteLock", "Lock");
+        
+        instantiateDataLink("NashornScriptEngine", "Invocable");
     }
     
     public static List<Pair<String, String>> getLinkedTypes() {
-        return linked;
+        return new ArrayList<>(linked);
+    }
+    
+    public static String getLinkedType(String target) {
+        return linkedTable.containsKey(target) ? linkedTable.get(target) : target;
     }
 }

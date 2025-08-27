@@ -35,7 +35,7 @@ public class MapleDeadlockStorage {
     private static Map<List<Integer>, Integer> mapleCompoundDataTypes = new HashMap<>();
     private static Map<String, Integer> mapleBasicDataTypes = new HashMap<>();
     private static Map<Integer, Integer> mapleElementalDataTypes = new HashMap<>();
-    private static Integer[] mapleElementalTypes = new Integer[7];
+    private static Integer[] mapleElementalTypes = new Integer[8];
     
     private static Map<Integer, Pair<Integer, Map<String, Integer>>> mapleReflectedClasses = new HashMap<>();
     private static Map<MapleDeadlockClass, List<MapleDeadlockClass>> mapleInheritanceTree = new HashMap<>();

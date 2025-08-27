@@ -21,8 +21,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javaparser.JavaParser;
 import mapledeadlocktracker.containers.MapleDeadlockClass;
 import mapledeadlocktracker.containers.MapleDeadlockEnum;
@@ -36,6 +34,7 @@ import mapledeadlocktracker.graph.MapleDeadlockGraphNodeCall;
 import mapledeadlocktracker.graph.MapleDeadlockGraphNodeLock;
 import mapledeadlocktracker.graph.MapleDeadlockGraphNodeScript;
 import mapledeadlocktracker.graph.MapleDeadlockGraphMethod;
+import mapledeadlocktracker.strings.MapleLinkedTypes;
 
 /**
  *
@@ -79,39 +78,12 @@ public class MapleDeadlockGraphMaker {
     private static Integer runningFid = 0;
     private static Integer lockId;
     
-    private static Pattern p = Pattern.compile("([\\w\\d_\\.]*)(\\[([\\w\\d_\\.]*\\]))?");
-    private static List<Pair<String,String>> scriptCalls = scriptMethods(MapleDeadlockConfig.getProperty("script_calls"));
-    
-    private static List<Pair<String,String>> scriptMethods(String methodSeq) {
-        List<Pair<String,String>> list = new LinkedList<>();
-        Matcher m = p.matcher(methodSeq);
-        while (m.find()) {
-            if (m.groupCount() > 1) {
-                list.add(new Pair<>(m.group(1), m.group(2)));
-            } else {
-                list.add(new Pair<>(m.group(1), null));
-            }
-        }
-        
-        return list;
-    }
-    
-    private static boolean isScriptCall(String methodName) {
-        for (Pair<String,String> p : scriptCalls) {
-            if (methodName.contentEquals(p.left)) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-    
     private static List<Integer> getArgumentTypes(MapleDeadlockGraphMethod node, JavaParser.ExpressionListContext expList, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass) {
         List<Integer> ret = new LinkedList<>();
         if(expList != null) {
             for(JavaParser.ExpressionContext exp : expList.expression()) {
                 for (Integer argType : parseMethodCalls(node, exp, sourceMethod, sourceClass)) {
-                    ret.add((argType != -1 && !argType.equals(mapleElementalTypes[6])) ? argType : -2);  // make accept any non-determined argument-type
+                    ret.add((argType != -1 && !argType.equals(mapleElementalTypes[7])) ? argType : -2);  // make accept any non-determined argument-type
                 }
             }
         }
@@ -149,16 +121,12 @@ public class MapleDeadlockGraphMaker {
         return mapleElementalTypes[4];
     }
     
-    private static Integer evaluateScriptFunction(String methodName, MapleDeadlockGraphMethod node) {
-        if (isScriptCall(methodName)) {
-            MapleDeadlockGraphEntry entry = new MapleDeadlockGraphEntry();    
-            entry.addGraphEntryPoint(new MapleDeadlockGraphNodeScript());
+    private static Integer evaluateScriptFunction(String methodName, List<Integer> argTypes, Integer dataType, MapleDeadlockGraphMethod node) {
+        MapleDeadlockGraphEntry entry = new MapleDeadlockGraphEntry();    
+        entry.addGraphEntryPoint(new MapleDeadlockGraphNodeScript());
 
-            node.addGraphEntry(entry);
-            return -2;
-        } else {
-            return -1;
-        }
+        node.addGraphEntry(entry);
+        return -2;
     }
     
     private static Integer evaluateAbstractFunction(MapleDeadlockGraphMethod node, String methodName, List<Integer> argTypes, Integer dataType, MapleDeadlockAbstractType absType) {
@@ -188,7 +156,7 @@ public class MapleDeadlockGraphMaker {
                 return evaluateLockFunction(methodName, argTypes, dataType, node);
                 
             case SCRIPT:
-                return evaluateScriptFunction(methodName, node);
+                return evaluateScriptFunction(methodName, argTypes, dataType, node);
                 
             case STRING:
             case OTHER:
@@ -326,7 +294,7 @@ public class MapleDeadlockGraphMaker {
         
             if(t == null) {
                 // maybe basic types
-                t = mapleBasicDataTypeIds.get(name);
+                t = mapleBasicDataTypeIds.get(MapleLinkedTypes.getLinkedType(name));
                 if(t != null && !t.equals(mapleElementalTypes[5])) {
                     return t;
                 }
@@ -388,7 +356,7 @@ public class MapleDeadlockGraphMaker {
         if(ctx.CHAR_LITERAL() != null) return mapleElementalTypes[2];
         if(ctx.STRING_LITERAL() != null) return mapleElementalTypes[3];
         if(ctx.BOOL_LITERAL() != null) return mapleElementalTypes[4];
-        if(ctx.NULL_LITERAL() != null) return mapleElementalTypes[6];
+        if(ctx.NULL_LITERAL() != null) return mapleElementalTypes[7];
         
         return -1;
     }
@@ -737,12 +705,14 @@ public class MapleDeadlockGraphMaker {
                 retTypes.add(mapleElementalTypes[3]);
             } else {
                 MapleDeadlockAbstractType absType = mapleAbstractDataTypes.get(classType);
-                if(absType != null && absType == MapleDeadlockAbstractType.LOCK) {
-                    Integer ret = evaluateAbstractFunction(node, methodName, argTypes, classType, absType);
-                    retTypes.add(ret);
+                if(absType != null) {
+                    if (absType == MapleDeadlockAbstractType.LOCK || absType == MapleDeadlockAbstractType.SCRIPT) {
+                        Integer ret = evaluateAbstractFunction(node, methodName, argTypes, classType, absType);
+                        retTypes.add(ret);
 
-                    //if(ret == -1 && absType != MapleDeadlockAbstractType.LOCK) System.out.println("SOMETHING OUT OF CALL FOR " + methodCall.IDENTIFIER().getText() + " ON " + absType /*+ dataNames.get(expType)*/);
-                    return retTypes;
+                        //if(ret == -1 && absType != MapleDeadlockAbstractType.LOCK) System.out.println("SOMETHING OUT OF CALL FOR " + methodCall.IDENTIFIER().getText() + " ON " + absType /*+ dataNames.get(expType)*/);
+                        return retTypes;
+                    }
                 }
                 
                 Integer ret = reflectedData.right.get(methodName);

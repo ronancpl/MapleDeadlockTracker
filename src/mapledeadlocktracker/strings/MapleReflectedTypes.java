@@ -30,7 +30,8 @@ public enum MapleReflectedTypes {
     ATOMICINTEGERARRAY("AtomicIntegerArray", initReflectedMethods(new String[]{"set", "lazySet", "compareAndSet", "weakCompareAndSet"}, new String[]{"void", "void", "boolean", "boolean"}), "int"),
     ATOMICLONGARRAY("AtomicLongArray", initReflectedMethods(new String[]{"set", "lazySet", "compareAndSet", "weakCompareAndSet"}, new String[]{"void", "void", "boolean", "boolean"}), "long"),
     STRING("String", initReflectedMethods(new String[]{}, new String[]{}), "Object"),
-    LOCK("Lock", initReflectedMethods(new String[]{"lock", "unlock", "tryLock"}, new String[]{"void", "void", "void"}), "Object");
+    LOCK("Lock", initReflectedMethods(new String[]{"lock", "unlock", "tryLock"}, new String[]{"void", "void", "void"}), "Object"),
+    SCRIPT("Invocable", initReflectedMethods(new String[]{"invokeFunction"}, new String[]{"void"}), "Object");
     
     private String name;
     private Map<String, String> methodReturns;

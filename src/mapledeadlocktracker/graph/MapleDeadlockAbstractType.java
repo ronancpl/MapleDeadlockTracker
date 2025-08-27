@@ -12,6 +12,7 @@
 package mapledeadlocktracker.graph;
 
 import mapledeadlocktracker.strings.MapleIgnoredTypes;
+import mapledeadlocktracker.strings.MapleLinkedTypes;
 
 /**
  *
@@ -44,11 +45,12 @@ public enum MapleDeadlockAbstractType {
         /*
         System.out.print("testing ABST " + typeName + " ");
         String t = typeName.split("<", 1)[0];
-
-        int idx = t.lastIndexOf('.');
-        if(idx > -1) t = t.substring(idx + 1);  // removing the package part of the type declaration
         */
-
+        
+        int idx = typeName.lastIndexOf('.');
+        if(idx > -1) typeName = typeName.substring(idx + 1);  // removing the package part of the type declaration
+        typeName = MapleLinkedTypes.getLinkedType(typeName);
+        
         //System.out.print("goingfor " + t + " ");
         
         switch(typeName) {
@@ -99,7 +101,7 @@ public enum MapleDeadlockAbstractType {
             case "String":
                 return MapleDeadlockAbstractType.STRING;
                 
-            case "NashornScriptEngine":
+            case "Invocable":
                 return MapleDeadlockAbstractType.SCRIPT;
                 
             default:

@@ -1125,8 +1125,12 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
             return mapleBasicDataTypes.get("Object");
         }
         
-        if (MapleDeadlockAbstractType.getValue(t) == MapleDeadlockAbstractType.LOCK) {
-            return mapleElementalTypes[5];
+        switch (MapleDeadlockAbstractType.getValue(t)) {
+            case LOCK:
+                return mapleElementalTypes[5];
+                
+            case SCRIPT:
+                return mapleElementalTypes[6];
         }
         
         try {
@@ -1346,6 +1350,7 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         instantiateElementalDataType("List");
         instantiateElementalDataType("Map");
         instantiateElementalDataType("Lock");
+        instantiateElementalDataType("Invocable");
         
         instantiateIgnoredDataTypes();
     }
@@ -1357,7 +1362,8 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         mapleElementalTypes[3] = mapleBasicDataTypes.get("String");
         mapleElementalTypes[4] = mapleBasicDataTypes.get("boolean");
         mapleElementalTypes[5] = mapleBasicDataTypes.get("Lock");
-        mapleElementalTypes[6] = mapleBasicDataTypes.get("null");
+        mapleElementalTypes[6] = mapleBasicDataTypes.get("Invocable");
+        mapleElementalTypes[7] = mapleBasicDataTypes.get("null");
         
         for(Pair<String, String> p : MapleLinkedTypes.getLinkedTypes()) {
             linkElementalDataTypes(p.left, p.right);
@@ -1459,12 +1465,9 @@ public class MapleDeadlockReader extends JavaParserBaseListener {
         fetchDataType("Set<Object>", null);
         
         generateDereferencedDataTypes();
-        
         generateReflectedDataTypes();
         
         solveRunnableFunctions();
-        
-        
         
         return storage;
     }
