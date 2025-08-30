@@ -1,5 +1,5 @@
 /*
-    This file is part of the MapleDeadlockTracker detection tool
+    This file is part of the DeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
@@ -9,7 +9,7 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package mapledeadlocktracker.strings;
+package deadlocktracker.strings;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +18,7 @@ import java.util.Set;
  *
  * @author RonanLana
  */
-public class MapleIgnoredTypes {
+public class IgnoredTypes {
     private static final Set<String> ignored = new HashSet<>();
     
     static {
@@ -96,7 +96,7 @@ public class MapleIgnoredTypes {
         // ----- specific data types ---------
         
         ignored.add("SeekableLittleEndianAccessor");
-        ignored.add("MaplePacketLittleEndianWriter");
+        ignored.add("PacketLittleEndianWriter");
         ignored.add("LittleEndianAccessor");
         ignored.add("LittleEndianWriter");
         ignored.add("ByteArrayOutputStream");
@@ -106,14 +106,14 @@ public class MapleIgnoredTypes {
         ignored.add("ProtocolEncoderOutput");
         ignored.add("ProtocolDecoderOutput");
         
-        ignored.add("MapleData");
-        ignored.add("MapleDataFileEntry");
-        ignored.add("MapleDataDirectoryEntry");
-        ignored.add("MapleDataProvider");
+        ignored.add("Data");
+        ignored.add("DataFileEntry");
+        ignored.add("DataDirectoryEntry");
+        ignored.add("DataProvider");
         
         ignored.add("Node");
         ignored.add("NamedNodeMap");
-        ignored.add("XMLDomMapleData");
+        ignored.add("XMLDomData");
     }
     
     public static boolean isDataTypeIgnored(String type) {

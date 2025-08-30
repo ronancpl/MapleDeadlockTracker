@@ -1,5 +1,5 @@
 /*
-    This file is part of the MapleDeadlockTracker detection tool
+    This file is part of the DeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
@@ -9,7 +9,7 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package mapledeadlocktracker.containers;
+package deadlocktracker.containers;
 
 import java.util.HashSet;
 import java.util.List;
@@ -19,11 +19,11 @@ import java.util.Set;
  *
  * @author RonanLana
  */
-public class MapleDeadlockEnum extends MapleDeadlockClass {
+public class DeadlockEnum extends DeadlockClass {
     Set<String> enumItems = new HashSet();
     
-    public MapleDeadlockEnum(String className, String packageName, String classPathName, List<String> superNames, MapleDeadlockClass parent) {
-        super(MapleDeadlockClassType.ENUM, className, packageName, classPathName, superNames, false, parent);
+    public DeadlockEnum(String className, String packageName, String classPathName, List<String> superNames, DeadlockClass parent) {
+        super(DeadlockClassType.ENUM, className, packageName, classPathName, superNames, false, parent);
     }
     
     public void addEnumItem(String item) {

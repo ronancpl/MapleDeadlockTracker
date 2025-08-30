@@ -1,5 +1,5 @@
 /*
-    This file is part of the MapleDeadlockTracker detection tool
+    This file is part of the DeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
@@ -9,29 +9,29 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package mapledeadlocktracker.graph;
+package deadlocktracker.graph;
 
 /**
  *
  * @author RonanLana
  */
-public class MapleDeadlockGraphNode {
+public class DeadlockGraphNode {
     int position;
     int lockid;
-    MapleDeadlockGraphNodeType type;
+    DeadlockGraphNodeType type;
     
-    protected MapleDeadlockGraphNode(int pos, MapleDeadlockGraphNodeType t, int lockid) {
+    protected DeadlockGraphNode(int pos, DeadlockGraphNodeType t, int lockid) {
         this.position = pos;
         this.type = t;
         this.lockid = lockid;
     }
     
-    public MapleDeadlockGraphNode() {
+    public DeadlockGraphNode() {
         position = -1;
-        type = MapleDeadlockGraphNodeType.END;
+        type = DeadlockGraphNodeType.END;
     }
     
-    public MapleDeadlockGraphNodeType getType() {
+    public DeadlockGraphNodeType getType() {
         return type;
     }
     
