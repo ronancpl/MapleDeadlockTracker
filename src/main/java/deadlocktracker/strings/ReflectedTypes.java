@@ -1,5 +1,5 @@
 /*
-    This file is part of the MapleDeadlockTracker detection tool
+    This file is part of the DeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
@@ -9,7 +9,7 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package mapledeadlocktracker.strings;
+package deadlocktracker.strings;
 
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ import java.util.LinkedHashMap;
  *
  * @author RonanLana
  */
-public enum MapleReflectedTypes {
+public enum ReflectedTypes {
     // NOTE: known class-type cannot be reflected, returns types must ALWAYS be basic types (that is, not known classes nor compounds)
     
     ATOMICBOOLEAN("AtomicBoolean", initReflectedMethods(new String[]{"set", "lazySet"}, new String[]{"void", "void"}), "boolean"),
@@ -37,7 +37,7 @@ public enum MapleReflectedTypes {
     private Map<String, String> methodReturns;
     private String defaultReturn;
     
-    MapleReflectedTypes(String reflectedName, Map<String, String> methodReturnTypes, String defReturn) {
+    ReflectedTypes(String reflectedName, Map<String, String> methodReturnTypes, String defReturn) {
         name = reflectedName;
         methodReturns = methodReturnTypes;
         defaultReturn = defReturn;
@@ -65,7 +65,7 @@ public enum MapleReflectedTypes {
         return map;
     }
     
-    public static List<MapleReflectedTypes> getReflectedTypes() {
-        return new ArrayList<>(Arrays.asList(MapleReflectedTypes.values()));
+    public static List<ReflectedTypes> getReflectedTypes() {
+        return new ArrayList<>(Arrays.asList(ReflectedTypes.values()));
     }
 }

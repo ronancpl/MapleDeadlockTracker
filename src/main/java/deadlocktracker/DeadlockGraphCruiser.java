@@ -1,5 +1,5 @@
 /*
-    This file is part of the MapleDeadlockTracker detection tool
+    This file is part of the DeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
@@ -9,7 +9,7 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package mapledeadlocktracker;
+package deadlocktracker;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,21 +24,21 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import mapledeadlocktracker.containers.MapleDeadlockEntry;
-import mapledeadlocktracker.containers.MapleDeadlockFunction;
-import mapledeadlocktracker.containers.MapleDeadlockStorage;
-import mapledeadlocktracker.containers.Pair;
-import mapledeadlocktracker.graph.MapleDeadlockGraphEntry;
-import mapledeadlocktracker.graph.MapleDeadlockGraphMethod;
-import mapledeadlocktracker.graph.MapleDeadlockGraphNode;
+import deadlocktracker.containers.DeadlockEntry;
+import deadlocktracker.containers.DeadlockFunction;
+import deadlocktracker.containers.DeadlockStorage;
+import deadlocktracker.containers.Pair;
+import deadlocktracker.graph.DeadlockGraphEntry;
+import deadlocktracker.graph.DeadlockGraphMethod;
+import deadlocktracker.graph.DeadlockGraphNode;
 
 /**
  *
  * @author RonanLana
  */
-public class MapleDeadlockGraphCruiser {
+public class DeadlockGraphCruiser {
     
-    private final static MapleDeadlockGraphCruiser instance = new MapleDeadlockGraphCruiser();
+    private final static DeadlockGraphCruiser instance = new DeadlockGraphCruiser();
     
     private class FunctionPathNode {
         
@@ -51,10 +51,10 @@ public class MapleDeadlockGraphCruiser {
     private class FunctionLockElement {
         
         Integer lockId;
-        MapleDeadlockFunction function;
+        DeadlockFunction function;
         Integer count;
         
-        private FunctionLockElement(Integer lockId, MapleDeadlockFunction function) {
+        private FunctionLockElement(Integer lockId, DeadlockFunction function) {
             this.lockId = lockId;
             this.function = function;
             this.count = 1;
@@ -71,20 +71,20 @@ public class MapleDeadlockGraphCruiser {
         
     }
     
-    static Set<MapleDeadlockEntry> deadlocks = new HashSet<>();
+    static Set<DeadlockEntry> deadlocks = new HashSet<>();
     
-    static Stack<MapleDeadlockFunction> functionStack = new Stack<>();
-    static Map<MapleDeadlockFunction, Integer> functionMap = new HashMap<>();
-    static Map<MapleDeadlockFunction, Set<Integer>> functionMilestones = new HashMap<>();
+    static Stack<DeadlockFunction> functionStack = new Stack<>();
+    static Map<DeadlockFunction, Integer> functionMap = new HashMap<>();
+    static Map<DeadlockFunction, Set<Integer>> functionMilestones = new HashMap<>();
     
-    static Map<MapleDeadlockFunction, FunctionPathNode> functionLocks = new HashMap<>();
-    static Map<Integer, Set<MapleDeadlockFunction>> lockFunctions = new HashMap<>();
+    static Map<DeadlockFunction, FunctionPathNode> functionLocks = new HashMap<>();
+    static Map<Integer, Set<DeadlockFunction>> lockFunctions = new HashMap<>();
     
-    static Map<Integer, MapleDeadlockFunction> functions = new HashMap<>();
+    static Map<Integer, DeadlockFunction> functions = new HashMap<>();
     static Map<Integer, Map<Integer, FunctionLockElement>> lockDependencies = new HashMap<>();
     
     private static Pattern p = Pattern.compile("([\\w\\d_\\.]*)(\\[([\\w\\d_\\.]*)\\])?");
-    private static List<Pair<String,String>> startingMethods = startingMethods(MapleDeadlockConfig.getProperty("entry_points"));
+    private static List<Pair<String,String>> startingMethods = startingMethods(DeadlockConfig.getProperty("entry_points"));
     
     private static List<Pair<String,String>> startingMethods(String methodSeq) {
         List<Pair<String,String>> list = new LinkedList<>();
@@ -100,9 +100,9 @@ public class MapleDeadlockGraphCruiser {
         return list;
     }
     
-    private static boolean isStartingFunction(MapleDeadlockFunction f) {
+    private static boolean isStartingFunction(DeadlockFunction f) {
         String fName = f.getName();
-        String cName = MapleDeadlockStorage.getCanonClassName(f.getSourceClass());
+        String cName = DeadlockStorage.getCanonClassName(f.getSourceClass());
         
         for (Pair<String,String> p : startingMethods) {
             if ((fName.contentEquals(p.left) || p.left.isEmpty()) && (p.right == null || cName.contentEquals(p.right))) {
@@ -113,7 +113,7 @@ public class MapleDeadlockGraphCruiser {
         return false;
     }
     
-    private static void commitFunctionAcquiredLocks(MapleDeadlockFunction f, FunctionPathNode trace, FunctionPathNode uptrace) {
+    private static void commitFunctionAcquiredLocks(DeadlockFunction f, FunctionPathNode trace, FunctionPathNode uptrace) {
         Set<Integer> ongoingLocks = trace.acquiredLocks;
         Set<Integer> locks = functionLocks.get(f).acquiredLocks;
         List<Integer> acqLocks = functionLocks.get(f).seqAcqLocks;
@@ -160,9 +160,9 @@ public class MapleDeadlockGraphCruiser {
         if (!ongoingLocks.acquiredLocks.isEmpty()) {
             String s = "";
             
-            ListIterator<MapleDeadlockFunction> i = functionStack.listIterator();
+            ListIterator<DeadlockFunction> i = functionStack.listIterator();
             while (i.hasNext()) {
-                MapleDeadlockFunction f = i.next();
+                DeadlockFunction f = i.next();
                 s += f.getName() + ",";
             }
             
@@ -170,19 +170,19 @@ public class MapleDeadlockGraphCruiser {
         }
     }
     
-    private static void insertGraphFunction(MapleDeadlockFunction f) {
+    private static void insertGraphFunction(DeadlockFunction f) {
         Integer i = functionMap.get(f);
         if (i == null) functionMap.put(f, 1);
         else functionMap.put(f, i + 1);
     }
     
-    private static void removeGraphFunction(MapleDeadlockFunction f) {
+    private static void removeGraphFunction(DeadlockFunction f) {
         Integer i = functionMap.get(f);
         if (i == 1) functionMap.remove(f);
         else functionMap.put(f, i - 1);
     }
     
-    private void runSourceGraphFunction(MapleDeadlockFunction f, Map<MapleDeadlockFunction, MapleDeadlockGraphMethod> g, FunctionPathNode uptrace) {
+    private void runSourceGraphFunction(DeadlockFunction f, Map<DeadlockFunction, DeadlockGraphMethod> g, FunctionPathNode uptrace) {
         Set<Integer> s = functionMilestones.get(f);
         int size = s.size();
         s.addAll(uptrace.acquiredLocks);
@@ -192,7 +192,7 @@ public class MapleDeadlockGraphCruiser {
             functionStack.add(f);
             
             while (functionStack.size() > curBaseIdx) {
-                MapleDeadlockFunction mdf = functionStack.pop();
+                DeadlockFunction mdf = functionStack.pop();
                 if (!functionMap.containsKey(mdf)) {
                     functionStack.add(mdf);
                     insertGraphFunction(mdf);
@@ -200,8 +200,8 @@ public class MapleDeadlockGraphCruiser {
                     FunctionPathNode ftrace = new FunctionPathNode();
                     ftrace.seqLocks.addAll(uptrace.seqLocks);
                     
-                    for (MapleDeadlockGraphEntry e : g.get(mdf).getEntryList()) {
-                        for (MapleDeadlockGraphNode n : e.getGraphEntryPoints()) {
+                    for (DeadlockGraphEntry e : g.get(mdf).getEntryList()) {
+                        for (DeadlockGraphNode n : e.getGraphEntryPoints()) {
                             switch (n.getType()) {
                                 case CALL:
                                     runSourceGraphFunction(functions.get(n.getValue()), g, ftrace);
@@ -231,25 +231,25 @@ public class MapleDeadlockGraphCruiser {
     }
     
     private static void prepareFunctionMilestones() {
-        for (Entry<Integer, MapleDeadlockFunction> f : functions.entrySet()) {
+        for (Entry<Integer, DeadlockFunction> f : functions.entrySet()) {
             functionMilestones.put(f.getValue(), new HashSet<>(5));
         }
     }
     
-    public static void makeRemissiveIndexFunctions(MapleDeadlockGraph graph) {
-        for (Entry<MapleDeadlockFunction, Integer> e : graph.getFunctionIds().entrySet()) {
+    public static void makeRemissiveIndexFunctions(DeadlockGraph graph) {
+        for (Entry<DeadlockFunction, Integer> e : graph.getFunctionIds().entrySet()) {
             functions.put(e.getValue(), e.getKey());
         }
     }
     
-    private void findFunctionLocks(MapleDeadlockGraph graph) {
+    private void findFunctionLocks(DeadlockGraph graph) {
         prepareFunctionMilestones();
         
-        Map<MapleDeadlockFunction, MapleDeadlockGraphMethod> functionGraph = graph.getFunctionGraph();
-        for (Entry<MapleDeadlockFunction, MapleDeadlockGraphMethod> e : functionGraph.entrySet()) {
-            MapleDeadlockFunction f = e.getKey();
+        Map<DeadlockFunction, DeadlockGraphMethod> functionGraph = graph.getFunctionGraph();
+        for (Entry<DeadlockFunction, DeadlockGraphMethod> e : functionGraph.entrySet()) {
+            DeadlockFunction f = e.getKey();
             if (isStartingFunction(f)) {
-                //System.out.println("Reading " + MapleDeadlockStorage.getCanonClassName(f.getSourceClass()) + " >> " + f.getName());
+                //System.out.println("Reading " + DeadlockStorage.getCanonClassName(f.getSourceClass()) + " >> " + f.getName());
                 FunctionPathNode trace = new FunctionPathNode();
                 runSourceGraphFunction(f, functionGraph, trace);
             }
@@ -266,7 +266,7 @@ public class MapleDeadlockGraphCruiser {
         return n;   // in the end of who knows when
     }
     
-    private void incrementLockInFunction(Integer i, Integer k, MapleDeadlockFunction nf) {
+    private void incrementLockInFunction(Integer i, Integer k, DeadlockFunction nf) {
         Map<Integer, FunctionLockElement> locks = lockDependencies.get(i);
         if (locks == null) {
             locks = new HashMap<>();
@@ -292,7 +292,7 @@ public class MapleDeadlockGraphCruiser {
         }
     }
     
-    private void fetchLockDependenciesInFunction(MapleDeadlockFunction f, MapleDeadlockFunction nf, FunctionPathNode n) {
+    private void fetchLockDependenciesInFunction(DeadlockFunction f, DeadlockFunction nf, FunctionPathNode n) {
         List<Integer> fl = functionLocks.get(f).seqAcqLocks;
         for (int a = 0; a < fl.size(); a++) {
             Integer i = fl.get(a);  // lockId
@@ -323,13 +323,13 @@ public class MapleDeadlockGraphCruiser {
     }
     
     private void fetchLockDependencies() {
-        Set<MapleDeadlockFunction> r = new HashSet<>();
+        Set<DeadlockFunction> r = new HashSet<>();
         
-        for (Entry<MapleDeadlockFunction, FunctionPathNode> e : functionLocks.entrySet()) {
-            MapleDeadlockFunction ek = e.getKey();
+        for (Entry<DeadlockFunction, FunctionPathNode> e : functionLocks.entrySet()) {
+            DeadlockFunction ek = e.getKey();
             r.add(ek);
             
-            for (Entry<MapleDeadlockFunction, FunctionPathNode> f : functionLocks.entrySet()) {
+            for (Entry<DeadlockFunction, FunctionPathNode> f : functionLocks.entrySet()) {
                 if (!r.contains(f.getKey())) {
                     fetchLockDependenciesInFunction(ek, f.getKey(), f.getValue());
                 }
@@ -364,7 +364,7 @@ public class MapleDeadlockGraphCruiser {
             lockFunctions.put(k, new HashSet<>(5));
         }
         
-        for (Entry<MapleDeadlockFunction, FunctionPathNode> e : functionLocks.entrySet()) {
+        for (Entry<DeadlockFunction, FunctionPathNode> e : functionLocks.entrySet()) {
             for (Integer i : e.getValue().seqAcqLocks) {
                 if (i > 0) lockFunctions.get(i).add(e.getKey());
             }
@@ -381,9 +381,9 @@ public class MapleDeadlockGraphCruiser {
             for (Entry<Integer, Map<Integer, FunctionLockElement>> f : lockDependencies.entrySet()) {
                 if (!r.contains(f.getKey())) {
                     if (detectDeadlocksInLockSequence(ek, e.getValue().values(), f.getKey(), f.getValue().values())) {
-                        for (MapleDeadlockFunction m : lockFunctions.get(ek)) {
-                            for (MapleDeadlockFunction n : lockFunctions.get(f.getKey())) {
-                                deadlocks.add(new MapleDeadlockEntry(ek, f.getKey(), m, n));
+                        for (DeadlockFunction m : lockFunctions.get(ek)) {
+                            for (DeadlockFunction n : lockFunctions.get(f.getKey())) {
+                                deadlocks.add(new DeadlockEntry(ek, f.getKey(), m, n));
                             }
                         }
                     }
@@ -392,27 +392,27 @@ public class MapleDeadlockGraphCruiser {
         }
     }
     
-    private void detectDeadlocks(Map<Integer, String> mapleLockNames) {
+    private void detectDeadlocks(Map<Integer, String> LockNames) {
         fetchLockDependencies();
-        dumpLockDependency(mapleLockNames);
+        dumpLockDependency(LockNames);
         makeRemissiveIndexLockFunctions();
         detectDeadlocksInLockDependencies();
     }
     
-    private void createFunctionAcquiredLocks(MapleDeadlockGraph graph) {
-        for(MapleDeadlockFunction f : graph.getFunctionIds().keySet()) {
+    private void createFunctionAcquiredLocks(DeadlockGraph graph) {
+        for(DeadlockFunction f : graph.getFunctionIds().keySet()) {
             FunctionPathNode ftrace = new FunctionPathNode();
             functionLocks.put(f, ftrace);
         }
     }
     
-    private static void dumpLockDependency(Map<Integer, String> mapleLockNames) {
+    private static void dumpLockDependency(Map<Integer, String> LockNames) {
         System.out.println("Lock dependency:");
         for (Entry<Integer, Map<Integer, FunctionLockElement>> e : lockDependencies.entrySet()) {
-            String s = mapleLockNames.get(e.getKey()) + " [";
+            String s = LockNames.get(e.getKey()) + " [";
             
             for (FunctionLockElement lockElem : e.getValue().values()) {
-                s += mapleLockNames.get(lockElem.lockId) + ", ";
+                s += LockNames.get(lockElem.lockId) + ", ";
             }
             
             s += "]";
@@ -422,12 +422,12 @@ public class MapleDeadlockGraphCruiser {
         System.out.println();
     }
     
-    public Set<MapleDeadlockEntry> runSourceGraph(MapleDeadlockGraph graph, Map<Integer, String> mapleLockNames) {
+    public Set<DeadlockEntry> runSourceGraph(DeadlockGraph graph, Map<Integer, String> LockNames) {
         createFunctionAcquiredLocks(graph);
         makeRemissiveIndexFunctions(graph);
         findFunctionLocks(graph);
         
-        detectDeadlocks(mapleLockNames);
+        detectDeadlocks(LockNames);
         return deadlocks;
     }
 }

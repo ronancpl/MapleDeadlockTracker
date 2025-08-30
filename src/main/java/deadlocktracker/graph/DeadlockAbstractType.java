@@ -1,5 +1,5 @@
 /*
-    This file is part of the MapleDeadlockTracker detection tool
+    This file is part of the DeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
@@ -9,16 +9,16 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package mapledeadlocktracker.graph;
+package deadlocktracker.graph;
 
-import mapledeadlocktracker.strings.MapleIgnoredTypes;
-import mapledeadlocktracker.strings.MapleLinkedTypes;
+import deadlocktracker.strings.IgnoredTypes;
+import deadlocktracker.strings.LinkedTypes;
 
 /**
  *
  * @author RonanLana
  */
-public enum MapleDeadlockAbstractType {
+public enum DeadlockAbstractType {
     NON_ABSTRACT(-1),
     SET(0),
     MAP(1),
@@ -33,7 +33,7 @@ public enum MapleDeadlockAbstractType {
 
     private final int i;
 
-    private MapleDeadlockAbstractType(int val) {
+    private DeadlockAbstractType(int val) {
         this.i = val;
     }
 
@@ -41,7 +41,7 @@ public enum MapleDeadlockAbstractType {
         return i;
     }
     
-    public static MapleDeadlockAbstractType getValue(String typeName) {
+    public static DeadlockAbstractType getValue(String typeName) {
         /*
         System.out.print("testing ABST " + typeName + " ");
         String t = typeName.split("<", 1)[0];
@@ -49,7 +49,7 @@ public enum MapleDeadlockAbstractType {
         
         int idx = typeName.lastIndexOf('.');
         if(idx > -1) typeName = typeName.substring(idx + 1);  // removing the package part of the type declaration
-        typeName = MapleLinkedTypes.getLinkedType(typeName);
+        typeName = LinkedTypes.getLinkedType(typeName);
         
         //System.out.print("goingfor " + t + " ");
         
@@ -58,21 +58,21 @@ public enum MapleDeadlockAbstractType {
             case "LinkedHashSet":
             case "HashSet":
             case "Set":
-                //System.out.println(MapleDeadlockAbstractType.SET);
-                return MapleDeadlockAbstractType.SET;
+                //System.out.println(DeadlockAbstractType.SET);
+                return DeadlockAbstractType.SET;
 
             case "LinkedList":
             case "ArrayList":
             case "List":
-                //System.out.println(MapleDeadlockAbstractType.LIST);
-                return MapleDeadlockAbstractType.LIST;
+                //System.out.println(DeadlockAbstractType.LIST);
+                return DeadlockAbstractType.LIST;
 
             case "LinkedHashMap":
             case "HashMap":
             case "EnumMap":
             case "Map":
-                //System.out.println(MapleDeadlockAbstractType.MAP);
-                return MapleDeadlockAbstractType.MAP;
+                //System.out.println(DeadlockAbstractType.MAP);
+                return DeadlockAbstractType.MAP;
             
             case "SyncLock":
             case "ReentrantReadWriteLock":
@@ -81,36 +81,36 @@ public enum MapleDeadlockAbstractType {
             case "ReadLock":
             case "WriteLock":
             case "Lock":
-                //System.out.println(MapleDeadlockAbstractType.LOCK);
-                return MapleDeadlockAbstractType.LOCK;
+                //System.out.println(DeadlockAbstractType.LOCK);
+                return DeadlockAbstractType.LOCK;
             
             case "PriorityQueue":
-                //System.out.println(MapleDeadlockAbstractType.PRIORITYQUEUE);
-                return MapleDeadlockAbstractType.PRIORITYQUEUE;
+                //System.out.println(DeadlockAbstractType.PRIORITYQUEUE);
+                return DeadlockAbstractType.PRIORITYQUEUE;
                 
             case "WeakReference":
             case "Reference":
             case "Iterator":
             case "Iterable":
             case "Comparable":
-                //System.out.println(MapleDeadlockAbstractType.REFERENCE);
-                return MapleDeadlockAbstractType.REFERENCE;
+                //System.out.println(DeadlockAbstractType.REFERENCE);
+                return DeadlockAbstractType.REFERENCE;
                 
             case "StringBuffer":
             case "StringBuilder":
             case "String":
-                return MapleDeadlockAbstractType.STRING;
+                return DeadlockAbstractType.STRING;
                 
             case "Invocable":
-                return MapleDeadlockAbstractType.SCRIPT;
+                return DeadlockAbstractType.SCRIPT;
                 
             default:
-                if(MapleIgnoredTypes.isDataTypeIgnored(typeName)) {
-                    return MapleDeadlockAbstractType.OTHER;
+                if(IgnoredTypes.isDataTypeIgnored(typeName)) {
+                    return DeadlockAbstractType.OTHER;
                 }
                 
-                //System.out.println(MapleDeadlockAbstractType.NON_ABSTRACT);
-                return MapleDeadlockAbstractType.NON_ABSTRACT;
+                //System.out.println(DeadlockAbstractType.NON_ABSTRACT);
+                return DeadlockAbstractType.NON_ABSTRACT;
         }
     }
 }
