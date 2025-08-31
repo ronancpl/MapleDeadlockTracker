@@ -1,5 +1,5 @@
 /*
-    This file is part of the DeadlockTracker detection tool
+    This file is part of the MapleDeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
@@ -9,27 +9,28 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package deadlocktracker.containers;
+package mapledeadlocktracker.graph;
 
 /**
  *
  * @author RonanLana
  */
-public class DeadlockLock {
+public class MapleDeadlockGraphNodeLock extends MapleDeadlockGraphNode {
+    boolean lock;
     Integer id;
-    String name;
     
-    public DeadlockLock(Integer lockId, String lockName) {
-        id = lockId;
-        name = lockName;
+    public MapleDeadlockGraphNodeLock(Integer lockid, boolean isLocking) {
+        super(-1, isLocking ? MapleDeadlockGraphNodeType.LOCK : MapleDeadlockGraphNodeType.UNLOCK, (lockid != null) ? lockid : -1);
+        lock = isLocking;
+        id = lockid;
     }
     
-    public Integer getId() {
+    public Integer getLock() {
         return id;
     }
     
     @Override
     public String toString() {
-        return name;
+        return (lock ? "L" : "U") + id;
     }
 }

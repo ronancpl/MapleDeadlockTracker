@@ -1,5 +1,5 @@
 /*
-    This file is part of the DeadlockTracker detection tool
+    This file is part of the MapleDeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
@@ -9,7 +9,7 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package deadlocktracker.containers;
+package mapledeadlocktracker.containers;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -24,7 +24,7 @@ import javaparser.JavaParser;
  *
  * @author RonanLana
  */
-public class DeadlockFunction {
+public class MapleDeadlockFunction {
     private static Map<Integer, List<Integer>> compoundTypes;
     private static Map<Integer, Integer> elementalTypes;
     private static Map<Integer, Set<Integer>> superTypes;
@@ -37,10 +37,10 @@ public class DeadlockFunction {
     private boolean isAbstract;
     private boolean isEllipsis = false;
     
-    private DeadlockClass source;
-    private DeadlockFunction parent;
+    private MapleDeadlockClass source;
+    private MapleDeadlockFunction parent;
     
-    private Set<DeadlockLock> locks;
+    private Set<MapleDeadlockLock> locks;
     
     private Map<Long, List<Integer>> volatileLocalVars = new HashMap<>();
     private Map<Long, Set<Integer>> localVars = new HashMap();
@@ -52,7 +52,7 @@ public class DeadlockFunction {
     private List<Integer> paramTypes;
     private Integer returnType;
     
-    public DeadlockFunction(String functName, DeadlockClass mdc, DeadlockFunction par, boolean abstracted) {
+    public MapleDeadlockFunction(String functName, MapleDeadlockClass mdc, MapleDeadlockFunction par, boolean abstracted) {
         name = functName;
         source = mdc;
         parent = par;
@@ -67,11 +67,11 @@ public class DeadlockFunction {
         paramVars = pVars;
     }
     
-    public DeadlockClass getSourceClass() {
+    public MapleDeadlockClass getSourceClass() {
         return source;
     }
     
-    public DeadlockFunction getParent() {
+    public MapleDeadlockFunction getParent() {
         return parent;
     }
     
@@ -87,12 +87,12 @@ public class DeadlockFunction {
         return this.isEllipsis;
     }
     
-    public void addLockEntry(DeadlockLock lock) {
+    public void addLockEntry(MapleDeadlockLock lock) {
         locks.add(lock);
     }
     
     public Long addLocalVariable(Integer type, String name) {
-        Long hash = DeadlockStorage.hash64(name);
+        Long hash = MapleDeadlockStorage.hash64(name);
         
         
         List<Integer> list = volatileLocalVars.get(hash);
@@ -191,7 +191,7 @@ public class DeadlockFunction {
             return true;
         }
         
-        if(DeadlockStorage.getBasicDataTypes().get("Object").equals(testParam)) {
+        if(MapleDeadlockStorage.getBasicDataTypes().get("Object").equals(testParam)) {
             return true;
         }
         
@@ -289,12 +289,12 @@ public class DeadlockFunction {
     }
     
     public static void installTypeReferences(Map<Integer, Integer> elementalTypes, Map<Integer, List<Integer>> compoundTypes, Map<Integer, Set<Integer>> superTypes, Set<Integer> enumTypes, Pair<Integer, Integer> ignoredDataRange, Integer intType) {
-        DeadlockFunction.elementalTypes = elementalTypes;
-        DeadlockFunction.superTypes = superTypes;
-        DeadlockFunction.enumTypes = enumTypes;
-        DeadlockFunction.ignoredRange = ignoredDataRange;
-        DeadlockFunction.intType = intType;
-        DeadlockFunction.compoundTypes = compoundTypes;
+        MapleDeadlockFunction.elementalTypes = elementalTypes;
+        MapleDeadlockFunction.superTypes = superTypes;
+        MapleDeadlockFunction.enumTypes = enumTypes;
+        MapleDeadlockFunction.ignoredRange = ignoredDataRange;
+        MapleDeadlockFunction.intType = intType;
+        MapleDeadlockFunction.compoundTypes = compoundTypes;
     }
     
     @Override

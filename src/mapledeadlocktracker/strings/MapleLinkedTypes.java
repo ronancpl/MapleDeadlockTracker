@@ -1,5 +1,5 @@
 /*
-    This file is part of the DeadlockTracker detection tool
+    This file is part of the MapleDeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
@@ -9,19 +9,19 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package deadlocktracker.strings;
+package mapledeadlocktracker.strings;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import deadlocktracker.containers.Pair;
+import mapledeadlocktracker.containers.Pair;
 
 /**
  *
  * @author RonanLana
  */
-public class LinkedTypes {
+public class MapleLinkedTypes {
     
     private static final Map<String, String> linkedTable = new HashMap<>();
     private static final List<Pair<String, String>> linked = new ArrayList<>();

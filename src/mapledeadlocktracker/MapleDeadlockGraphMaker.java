@@ -1,5 +1,5 @@
 /*
-    This file is part of the DeadlockTracker detection tool
+    This file is part of the MapleDeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
@@ -9,7 +9,7 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package deadlocktracker;
+package mapledeadlocktracker;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -22,68 +22,68 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import javaparser.JavaParser;
-import deadlocktracker.containers.DeadlockClass;
-import deadlocktracker.containers.DeadlockEnum;
-import deadlocktracker.containers.DeadlockFunction;
-import deadlocktracker.containers.DeadlockLock;
-import deadlocktracker.containers.DeadlockStorage;
-import deadlocktracker.containers.Pair;
-import deadlocktracker.graph.DeadlockAbstractType;
-import deadlocktracker.graph.DeadlockGraphEntry;
-import deadlocktracker.graph.DeadlockGraphNodeCall;
-import deadlocktracker.graph.DeadlockGraphNodeLock;
-import deadlocktracker.graph.DeadlockGraphNodeScript;
-import deadlocktracker.graph.DeadlockGraphMethod;
-import deadlocktracker.strings.LinkedTypes;
+import mapledeadlocktracker.containers.MapleDeadlockClass;
+import mapledeadlocktracker.containers.MapleDeadlockEnum;
+import mapledeadlocktracker.containers.MapleDeadlockFunction;
+import mapledeadlocktracker.containers.MapleDeadlockLock;
+import mapledeadlocktracker.containers.MapleDeadlockStorage;
+import mapledeadlocktracker.containers.Pair;
+import mapledeadlocktracker.graph.MapleDeadlockAbstractType;
+import mapledeadlocktracker.graph.MapleDeadlockGraphEntry;
+import mapledeadlocktracker.graph.MapleDeadlockGraphNodeCall;
+import mapledeadlocktracker.graph.MapleDeadlockGraphNodeLock;
+import mapledeadlocktracker.graph.MapleDeadlockGraphNodeScript;
+import mapledeadlocktracker.graph.MapleDeadlockGraphMethod;
+import mapledeadlocktracker.strings.MapleLinkedTypes;
 
 /**
  *
  * @author RonanLana
  */
-public class DeadlockGraphMaker {
-    private static Map<String, Map<String, DeadlockClass>> PublicClasses;
-    private static Map<String, Map<String, DeadlockClass>> PrivateClasses;
-    private static Map<String, DeadlockClass> AllClasses;
-    private static Map<String, DeadlockLock> Locks;
+public class MapleDeadlockGraphMaker {
+    private static Map<String, Map<String, MapleDeadlockClass>> maplePublicClasses;
+    private static Map<String, Map<String, MapleDeadlockClass>> maplePrivateClasses;
+    private static Map<String, MapleDeadlockClass> mapleAllClasses;
+    private static Map<String, MapleDeadlockLock> mapleLocks;
     
     private static Integer objectSetId;
-    private static Map<Integer, Integer> ElementalDataTypes;
-    private static Integer[] ElementalTypes;
-    private static Set<Integer> EnumDataTypes;
+    private static Map<Integer, Integer> mapleElementalDataTypes;
+    private static Integer[] mapleElementalTypes;
+    private static Set<Integer> mapleEnumDataTypes;
     
-    private static Map<DeadlockClass, Integer> ClassDataTypeIds;
-    private static Map<String, Integer> BasicDataTypeIds;
+    private static Map<MapleDeadlockClass, Integer> mapleClassDataTypeIds;
+    private static Map<String, Integer> mapleBasicDataTypeIds;
     
-    private static Map<Integer, Pair<Integer, Map<String, Integer>>> ReflectedClasses;
-    private static Map<DeadlockClass, List<DeadlockClass>> InheritanceTree;
-    private static Pair<Integer, Integer> IgnoredDataRange;
+    private static Map<Integer, Pair<Integer, Map<String, Integer>>> mapleReflectedClasses;
+    private static Map<MapleDeadlockClass, List<MapleDeadlockClass>> mapleInheritanceTree;
+    private static Pair<Integer, Integer> mapleIgnoredDataRange;
     
-    private static List<DeadlockFunction> RunnableMethods;
+    private static List<MapleDeadlockFunction> mapleRunnableMethods;
     
-    private static Map<Integer, List<Integer>> CompoundDataTypes = new HashMap<>();
-    private static Map<Integer, DeadlockClass> ClassDataTypes = new HashMap<>();
-    private static Map<Integer, DeadlockAbstractType> AbstractDataTypes = new HashMap<>();
-    private static Map<Integer, String> BasicDataTypes = new HashMap<>();
-    private static Map<String, Integer> DereferencedDataTypes = new HashMap<>();
+    private static Map<Integer, List<Integer>> mapleCompoundDataTypes = new HashMap<>();
+    private static Map<Integer, MapleDeadlockClass> mapleClassDataTypes = new HashMap<>();
+    private static Map<Integer, MapleDeadlockAbstractType> mapleAbstractDataTypes = new HashMap<>();
+    private static Map<Integer, String> mapleBasicDataTypes = new HashMap<>();
+    private static Map<String, Integer> mapleDereferencedDataTypes = new HashMap<>();
     
-    private static Map<Integer, String> EveryDataTypes = new HashMap<>();
-    private static Map<String, Integer> EveryDataTypeIds = new HashMap<>();
+    private static Map<Integer, String> mapleEveryDataTypes = new HashMap<>();
+    private static Map<String, Integer> mapleEveryDataTypeIds = new HashMap<>();
     
-    private static Map<Integer, Set<Integer>> SuperClasses = new HashMap<>();
-    private static Map<Integer, Integer> DataWrapper = new HashMap<>();
+    private static Map<Integer, Set<Integer>> mapleSuperClasses = new HashMap<>();
+    private static Map<Integer, Integer> mapleDataWrapper = new HashMap<>();
     
-    private static Map<DeadlockFunction, Integer> GraphFunctionIds = new HashMap<>();
-    private static Map<DeadlockFunction, DeadlockGraphMethod> GraphFunctions = new HashMap<>();
+    private static Map<MapleDeadlockFunction, Integer> mapleGraphFunctionIds = new HashMap<>();
+    private static Map<MapleDeadlockFunction, MapleDeadlockGraphMethod> mapleGraphFunctions = new HashMap<>();
     
     private static Integer runningFid = 0;
     private static Integer lockId;
     
-    private static List<Integer> getArgumentTypes(DeadlockGraphMethod node, JavaParser.ExpressionListContext expList, DeadlockFunction sourceMethod, DeadlockClass sourceClass) {
+    private static List<Integer> getArgumentTypes(MapleDeadlockGraphMethod node, JavaParser.ExpressionListContext expList, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass) {
         List<Integer> ret = new LinkedList<>();
         if(expList != null) {
             for(JavaParser.ExpressionContext exp : expList.expression()) {
                 for (Integer argType : parseMethodCalls(node, exp, sourceMethod, sourceClass)) {
-                    ret.add((argType != -1 && !argType.equals(ElementalTypes[7])) ? argType : -2);  // make accept any non-determined argument-type
+                    ret.add((argType != -1 && !argType.equals(mapleElementalTypes[7])) ? argType : -2);  // make accept any non-determined argument-type
                 }
             }
         }
@@ -92,44 +92,44 @@ public class DeadlockGraphMaker {
     }
     
     private static Integer getWrappedValue(Integer dataType) {
-        Integer ret = DataWrapper.get(dataType);
+        Integer ret = mapleDataWrapper.get(dataType);
         
         if(ret == null) {
-            List<Integer> cdt = CompoundDataTypes.get(dataType);
+            List<Integer> cdt = mapleCompoundDataTypes.get(dataType);
             
             ret = cdt.get(cdt.size() - 2);
-            DataWrapper.put(dataType, ret);
+            mapleDataWrapper.put(dataType, ret);
         }
         
         return ret;
     }
     
-    private static Integer evaluateLockFunction(String methodName, List<Integer> argTypes, Integer dataType, DeadlockGraphMethod node) {
+    private static Integer evaluateLockFunction(String methodName, List<Integer> argTypes, Integer dataType, MapleDeadlockGraphMethod node) {
         switch(methodName) {
             case "lock":
             case "tryLock":
                 //System.out.println("adding lock node " + lockId);
-                node.addGraphEntry(new DeadlockGraphEntry(new DeadlockGraphNodeLock(lockId, true)));
+                node.addGraphEntry(new MapleDeadlockGraphEntry(new MapleDeadlockGraphNodeLock(lockId, true)));
                 break;
                 
             case "unlock":
                 //System.out.println("adding unlock node " + lockId);
-                node.addGraphEntry(new DeadlockGraphEntry(new DeadlockGraphNodeLock(lockId, false)));
+                node.addGraphEntry(new MapleDeadlockGraphEntry(new MapleDeadlockGraphNodeLock(lockId, false)));
                 break;
         }
         
-        return ElementalTypes[4];
+        return mapleElementalTypes[4];
     }
     
-    private static Integer evaluateScriptFunction(String methodName, List<Integer> argTypes, Integer dataType, DeadlockGraphMethod node) {
-        DeadlockGraphEntry entry = new DeadlockGraphEntry();    
-        entry.addGraphEntryPoint(new DeadlockGraphNodeScript());
+    private static Integer evaluateScriptFunction(String methodName, List<Integer> argTypes, Integer dataType, MapleDeadlockGraphMethod node) {
+        MapleDeadlockGraphEntry entry = new MapleDeadlockGraphEntry();    
+        entry.addGraphEntryPoint(new MapleDeadlockGraphNodeScript());
 
         node.addGraphEntry(entry);
         return -2;
     }
     
-    private static Integer evaluateAbstractFunction(DeadlockGraphMethod node, String methodName, List<Integer> argTypes, Integer dataType, DeadlockAbstractType absType) {
+    private static Integer evaluateAbstractFunction(MapleDeadlockGraphMethod node, String methodName, List<Integer> argTypes, Integer dataType, MapleDeadlockAbstractType absType) {
         switch(absType) {
             case MAP:
                 if(methodName.contentEquals("entrySet")) {
@@ -140,8 +140,8 @@ public class DeadlockGraphMaker {
             case LIST:
             case STACK:
             case PRIORITYQUEUE:
-                if(methodName.contentEquals("size")) return ElementalTypes[0];
-                //if(methodName.contentEquals("iterator")) return ElementalTypes[0];
+                if(methodName.contentEquals("size")) return mapleElementalTypes[0];
+                //if(methodName.contentEquals("iterator")) return mapleElementalTypes[0];
                 
                 return getWrappedValue(dataType);
             
@@ -166,25 +166,25 @@ public class DeadlockGraphMaker {
         return -1;
     }
     
-    private static DeadlockClass getClassFromType(Integer type) {
-        return ClassDataTypes.get(type);
+    private static MapleDeadlockClass getClassFromType(Integer type) {
+        return mapleClassDataTypes.get(type);
     }
     
-    private static void createGraphFunction(DeadlockFunction mdf) {
-        GraphFunctionIds.put(mdf, runningFid);
-        GraphFunctions.put(mdf, new DeadlockGraphMethod(runningFid, DeadlockStorage.getCanonClassName(mdf.getSourceClass()) + " >> " + mdf.getName()));
+    private static void createGraphFunction(MapleDeadlockFunction mdf) {
+        mapleGraphFunctionIds.put(mdf, runningFid);
+        mapleGraphFunctions.put(mdf, new MapleDeadlockGraphMethod(runningFid, MapleDeadlockStorage.getCanonClassName(mdf.getSourceClass()) + " >> " + mdf.getName()));
         mdf.setId(runningFid);
         
         runningFid++;
     }
     
-    private static Integer getLockId(String identifier, DeadlockClass sourceClass) {
-        String lockName = DeadlockStorage.getCanonClassName(sourceClass) + "." + identifier;
-        DeadlockLock lock = Locks.get(lockName);
+    private static Integer getLockId(String identifier, MapleDeadlockClass sourceClass) {
+        String lockName = MapleDeadlockStorage.getCanonClassName(sourceClass) + "." + identifier;
+        MapleDeadlockLock lock = mapleLocks.get(lockName);
         
         if(lock != null) return lock.getId();
         
-        for(DeadlockClass mdc : sourceClass.getSuperList()) {
+        for(MapleDeadlockClass mdc : sourceClass.getSuperList()) {
             Integer ret = getLockId(identifier, mdc);
             if (ret > -1) return ret;
         }
@@ -197,27 +197,27 @@ public class DeadlockGraphMaker {
         return -1;
     }
     
-    private static boolean isImportEnum(String name, DeadlockClass sourceClass) {
+    private static boolean isImportEnum(String name, MapleDeadlockClass sourceClass) {
         String names[] = name.split("\\.");
         if (names.length == 0) names = new String[]{name};
         
         return sourceClass.getEnums().contains(names[names.length - 1]);
     }
     
-    private static void setImportEnums(DeadlockClass sourceClass) {
+    private static void setImportEnums(MapleDeadlockClass sourceClass) {
         Set<String> importedEnums = new HashSet<>();
-        for (Pair<String, DeadlockClass> e : sourceClass.getImports()) {
+        for (Pair<String, MapleDeadlockClass> e : sourceClass.getImports()) {
             if (e.getRight() == null) {     // possible candidate for enum item
                 String names[] = e.getLeft().split("\\.");
                 if (names.length == 0) names = new String[]{e.getLeft()};
                 
-                DeadlockClass c;
+                MapleDeadlockClass c;
                 String path = names[0];
                 int s = -1;
                 
                 int i = 0;
                 while (true) {
-                    c = AllClasses.get(path);
+                    c = mapleAllClasses.get(path);
                     
                     if (c != null) {
                         s = path.length();
@@ -226,9 +226,9 @@ public class DeadlockGraphMaker {
                             if (!names[i].contentEquals("*")) {
                                 importedEnums.add(names[names.length - 1]);
                             } else {
-                                c = AllClasses.get(path.substring(0, s));
+                                c = mapleAllClasses.get(path.substring(0, s));
                                 if (c.isEnum()) {
-                                    DeadlockEnum e1 = (DeadlockEnum) c;
+                                    MapleDeadlockEnum e1 = (MapleDeadlockEnum) c;
                                     for (String s1 : e1.getEnumItems()) {
                                         importedEnums.add(s1);
                                     }
@@ -249,7 +249,7 @@ public class DeadlockGraphMaker {
         sourceClass.setEnums(importedEnums);
     }
     
-    private static Integer getPrimaryTypeOnFieldVars(String name, DeadlockClass sourceClass) {
+    private static Integer getPrimaryTypeOnFieldVars(String name, MapleDeadlockClass sourceClass) {
         Integer t = sourceClass.getFieldVariable(name);
         if(t != null) return t;
         
@@ -257,7 +257,7 @@ public class DeadlockGraphMaker {
             return -2;
         }
         
-        for(DeadlockClass mdc : sourceClass.getSuperList()) {
+        for(MapleDeadlockClass mdc : sourceClass.getSuperList()) {
             t = getPrimaryTypeOnFieldVars(name, mdc);
 
             if(t != null) {
@@ -269,8 +269,8 @@ public class DeadlockGraphMaker {
         return null;
     }
     
-    private static Integer getPrimaryTypeFromLocalVars(String name, DeadlockFunction sourceMethod) {
-        Long nameHash = DeadlockStorage.hash64(name);
+    private static Integer getPrimaryTypeFromLocalVars(String name, MapleDeadlockFunction sourceMethod) {
+        Long nameHash = MapleDeadlockStorage.hash64(name);
         
         do {
             Set<Integer> nameTypes = sourceMethod.getLocalVariables().get(nameHash);
@@ -284,8 +284,8 @@ public class DeadlockGraphMaker {
         return null;
     }
     
-    private static Integer getPrimaryType(String name, DeadlockFunction sourceMethod, DeadlockClass sourceClass) {
-        //System.out.println("trying " + name + " on " + DeadlockStorage.getCanonClassName(sourceClass));
+    private static Integer getPrimaryType(String name, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass) {
+        //System.out.println("trying " + name + " on " + MapleDeadlockStorage.getCanonClassName(sourceClass));
         //System.out.println(localVars);
         
         Integer t = getPrimaryTypeFromLocalVars(name, sourceMethod);
@@ -294,40 +294,40 @@ public class DeadlockGraphMaker {
         
             if(t == null) {
                 // maybe basic types
-                t = BasicDataTypeIds.get(LinkedTypes.getLinkedType(name));
-                if(t != null && !t.equals(ElementalTypes[5])) {
+                t = mapleBasicDataTypeIds.get(MapleLinkedTypes.getLinkedType(name));
+                if(t != null && !t.equals(mapleElementalTypes[5])) {
                     return t;
                 }
                 
                 // maybe class-based types
-                DeadlockClass mdc = DeadlockStorage.locateClass(name, sourceClass);
+                MapleDeadlockClass mdc = MapleDeadlockStorage.locateClass(name, sourceClass);
                 if(mdc != null) {
-                    return ClassDataTypeIds.get(mdc);
+                    return mapleClassDataTypeIds.get(mdc);
                 }
                 
                 if(sourceClass.isEnum()) {    // maybe it's an identifier defining an specific item from an enum, return self-type
-                    DeadlockEnum mde = (DeadlockEnum) sourceClass;
+                    MapleDeadlockEnum mde = (MapleDeadlockEnum) sourceClass;
                     
                     if(mde.containsEnumItem(name)) {
-                        return ClassDataTypeIds.get(sourceClass);
+                        return mapleClassDataTypeIds.get(sourceClass);
                     }
                 }
             }
         }
         
         if(t == null) {
-            //System.out.println("FAILED TO FIND '" + name + "' ON " + DeadlockStorage.getCanonClassName(sourceClass) + ", call was " + curCall);
+            //System.out.println("FAILED TO FIND '" + name + "' ON " + MapleDeadlockStorage.getCanonClassName(sourceClass) + ", call was " + curCall);
             return -1;
         }
         
-        if(t.equals(ElementalTypes[5])) {
+        if(t.equals(mapleElementalTypes[5])) {
             lockId = getLockId(name, sourceClass);
         }
         
         return t;
     }
     
-    private static Integer getRelevantType(Integer retType, Set<Integer> templateTypes, DeadlockClass c, Integer expType) {
+    private static Integer getRelevantType(Integer retType, Set<Integer> templateTypes, MapleDeadlockClass c, Integer expType) {
         if(retType == -2) return retType;
         
         if(templateTypes != null && templateTypes.contains(retType)) {
@@ -340,7 +340,7 @@ public class DeadlockGraphMaker {
             }
             
             try {
-                List<Integer> cTypes = CompoundDataTypes.get(expType);
+                List<Integer> cTypes = mapleCompoundDataTypes.get(expType);
                 retType = cTypes.get(pos);
             } catch(Exception e) {  // e.g. case where objects of unknown types are being compared with equals()
                 return -2;
@@ -351,18 +351,18 @@ public class DeadlockGraphMaker {
     }
     
     private static Integer getLiteralType(JavaParser.LiteralContext ctx) {
-        if(ctx.integerLiteral() != null) return ElementalTypes[0];
-        if(ctx.floatLiteral() != null) return ElementalTypes[1];
-        if(ctx.CHAR_LITERAL() != null) return ElementalTypes[2];
-        if(ctx.STRING_LITERAL() != null) return ElementalTypes[3];
-        if(ctx.BOOL_LITERAL() != null) return ElementalTypes[4];
-        if(ctx.NULL_LITERAL() != null) return ElementalTypes[7];
+        if(ctx.integerLiteral() != null) return mapleElementalTypes[0];
+        if(ctx.floatLiteral() != null) return mapleElementalTypes[1];
+        if(ctx.CHAR_LITERAL() != null) return mapleElementalTypes[2];
+        if(ctx.STRING_LITERAL() != null) return mapleElementalTypes[3];
+        if(ctx.BOOL_LITERAL() != null) return mapleElementalTypes[4];
+        if(ctx.NULL_LITERAL() != null) return mapleElementalTypes[7];
         
         return -1;
     }
     
-    private static Pair<DeadlockFunction, Set<Integer>> getMethodDefinitionFromClass(DeadlockClass c, String method, List<Integer> argTypes) {
-        DeadlockFunction mdf = c.getMethod(false, method, argTypes);
+    private static Pair<MapleDeadlockFunction, Set<Integer>> getMethodDefinitionFromClass(MapleDeadlockClass c, String method, List<Integer> argTypes) {
+        MapleDeadlockFunction mdf = c.getMethod(false, method, argTypes);
         if(mdf != null) {
             Set<Integer> templateTypes = c.getMaskedTypeSet();
             return new Pair<>(mdf, templateTypes);
@@ -371,13 +371,13 @@ public class DeadlockGraphMaker {
         return null;
     }
     
-    private static void getMethodImplementationsFromSubclasses(DeadlockClass c, String method, Integer expType, List<Integer> argTypes, Map<Integer, Integer> elementalTypes, Set<Pair<DeadlockFunction, Set<Integer>>> implementedFunctions) {
-        List<DeadlockClass> subclasses = InheritanceTree.get(c);
+    private static void getMethodImplementationsFromSubclasses(MapleDeadlockClass c, String method, Integer expType, List<Integer> argTypes, Map<Integer, Integer> elementalTypes, Set<Pair<MapleDeadlockFunction, Set<Integer>>> implementedFunctions) {
+        List<MapleDeadlockClass> subclasses = mapleInheritanceTree.get(c);
         if(subclasses != null) {
-            for(DeadlockClass mdc : subclasses) {
+            for(MapleDeadlockClass mdc : subclasses) {
                 getMethodImplementationsFromSubclasses(mdc, method, expType, argTypes, elementalTypes, implementedFunctions);
                 
-                Pair<DeadlockFunction, Set<Integer>> classMethodImplementation = getMethodDefinitionFromClass(mdc, method, argTypes);
+                Pair<MapleDeadlockFunction, Set<Integer>> classMethodImplementation = getMethodDefinitionFromClass(mdc, method, argTypes);
                 if(classMethodImplementation != null && !classMethodImplementation.left.isAbstract()) {
                     implementedFunctions.add(classMethodImplementation);
                 }
@@ -385,11 +385,11 @@ public class DeadlockGraphMaker {
         }
     }
     
-    private static Pair<Pair<DeadlockFunction, Set<Integer>>, Set<Pair<DeadlockFunction, Set<Integer>>>> getMethodImplementations(DeadlockClass c, String method, Integer expType, List<Integer> argTypes, Map<Integer, Integer> elementalTypes) {
-        Set<Pair<DeadlockFunction, Set<Integer>>> implementedFunctions = new LinkedHashSet<>();
-        Pair<DeadlockFunction, Set<Integer>> retMethod = null;
+    private static Pair<Pair<MapleDeadlockFunction, Set<Integer>>, Set<Pair<MapleDeadlockFunction, Set<Integer>>>> getMethodImplementations(MapleDeadlockClass c, String method, Integer expType, List<Integer> argTypes, Map<Integer, Integer> elementalTypes) {
+        Set<Pair<MapleDeadlockFunction, Set<Integer>>> implementedFunctions = new LinkedHashSet<>();
+        Pair<MapleDeadlockFunction, Set<Integer>> retMethod = null;
         
-        Pair<DeadlockFunction, Set<Integer>> p = getMethodDefinitionFromClass(c, method, argTypes);
+        Pair<MapleDeadlockFunction, Set<Integer>> p = getMethodDefinitionFromClass(c, method, argTypes);
         if(p != null) {
             retMethod = p;
             
@@ -399,8 +399,8 @@ public class DeadlockGraphMaker {
         } else {
             // will need to access superclasses to return a method accessible by the inputted class
             
-            for(DeadlockClass sup : c.getSuperList()) {
-                DeadlockFunction m = sup.getMethod(true, method, argTypes);
+            for(MapleDeadlockClass sup : c.getSuperList()) {
+                MapleDeadlockFunction m = sup.getMethod(true, method, argTypes);
                 if(m != null) {
                     retMethod = new Pair<>(m, m.getSourceClass().getMaskedTypeSet());
                     
@@ -414,10 +414,10 @@ public class DeadlockGraphMaker {
             
             if(retMethod == null) {
                 // if all else fails, check if parent classes have this function
-                DeadlockClass parent = c.getParent();
+                MapleDeadlockClass parent = c.getParent();
                 
                 if(parent != null) {
-                    DeadlockFunction m = parent.getMethod(true, method, argTypes);
+                    MapleDeadlockFunction m = parent.getMethod(true, method, argTypes);
                     if(m != null) {
                         retMethod = new Pair<>(m, m.getSourceClass().getMaskedTypeSet());
                         
@@ -437,8 +437,8 @@ public class DeadlockGraphMaker {
         return new Pair<>(retMethod, implementedFunctions);
     }
     
-    private static Pair<DeadlockFunction, Set<Integer>> getTemplateMethodDefinitionFromClass(DeadlockClass c, String method, List<Integer> argTypes) {
-        DeadlockFunction mdf = c.getTemplateMethod(false, method, argTypes);
+    private static Pair<MapleDeadlockFunction, Set<Integer>> getTemplateMethodDefinitionFromClass(MapleDeadlockClass c, String method, List<Integer> argTypes) {
+        MapleDeadlockFunction mdf = c.getTemplateMethod(false, method, argTypes);
         if(mdf != null) {
             Set<Integer> templateTypes = c.getMaskedTypeSet();
             return new Pair<>(mdf, templateTypes);
@@ -447,13 +447,13 @@ public class DeadlockGraphMaker {
         return null;
     }
     
-    private static void getTemplateMethodImplementationsFromSubclasses(DeadlockClass c, String method, Integer expType, List<Integer> argTypes, Map<Integer, Integer> elementalTypes, Set<Pair<DeadlockFunction, Set<Integer>>> implementedFunctions) {
-        List<DeadlockClass> subclasses = InheritanceTree.get(c);
+    private static void getTemplateMethodImplementationsFromSubclasses(MapleDeadlockClass c, String method, Integer expType, List<Integer> argTypes, Map<Integer, Integer> elementalTypes, Set<Pair<MapleDeadlockFunction, Set<Integer>>> implementedFunctions) {
+        List<MapleDeadlockClass> subclasses = mapleInheritanceTree.get(c);
         if(subclasses != null) {
-            for(DeadlockClass mdc : subclasses) {
+            for(MapleDeadlockClass mdc : subclasses) {
                 getTemplateMethodImplementationsFromSubclasses(mdc, method, expType, argTypes, elementalTypes, implementedFunctions);
             
-                Pair<DeadlockFunction, Set<Integer>> classMethodImplementation = getTemplateMethodDefinitionFromClass(mdc, method, argTypes);
+                Pair<MapleDeadlockFunction, Set<Integer>> classMethodImplementation = getTemplateMethodDefinitionFromClass(mdc, method, argTypes);
                 if(classMethodImplementation != null && !classMethodImplementation.left.isAbstract()) {
                     implementedFunctions.add(classMethodImplementation);
                 }
@@ -461,11 +461,11 @@ public class DeadlockGraphMaker {
         }
     }
     
-    private static Pair<Pair<DeadlockFunction, Set<Integer>>, Set<Pair<DeadlockFunction, Set<Integer>>>> getTemplateMethodImplementations(DeadlockClass c, String method, Integer expType, List<Integer> argTypes, Map<Integer, Integer> elementalTypes) {
-        Set<Pair<DeadlockFunction, Set<Integer>>> implementedFunctions = new LinkedHashSet<>();
-        Pair<DeadlockFunction, Set<Integer>> retMethod = null;
+    private static Pair<Pair<MapleDeadlockFunction, Set<Integer>>, Set<Pair<MapleDeadlockFunction, Set<Integer>>>> getTemplateMethodImplementations(MapleDeadlockClass c, String method, Integer expType, List<Integer> argTypes, Map<Integer, Integer> elementalTypes) {
+        Set<Pair<MapleDeadlockFunction, Set<Integer>>> implementedFunctions = new LinkedHashSet<>();
+        Pair<MapleDeadlockFunction, Set<Integer>> retMethod = null;
         
-        Pair<DeadlockFunction, Set<Integer>> p = getTemplateMethodDefinitionFromClass(c, method, argTypes);
+        Pair<MapleDeadlockFunction, Set<Integer>> p = getTemplateMethodDefinitionFromClass(c, method, argTypes);
         if(p != null) {
             retMethod = p;
             
@@ -475,8 +475,8 @@ public class DeadlockGraphMaker {
         } else {
             // will need to access superclasses to return a method accessible by the inputted class
             
-            for(DeadlockClass sup : c.getSuperList()) {
-                DeadlockFunction m = sup.getTemplateMethod(true, method, argTypes);
+            for(MapleDeadlockClass sup : c.getSuperList()) {
+                MapleDeadlockFunction m = sup.getTemplateMethod(true, method, argTypes);
                 if(m != null) {
                     retMethod = new Pair<>(m, m.getSourceClass().getMaskedTypeSet());
                     
@@ -490,10 +490,10 @@ public class DeadlockGraphMaker {
             
             if(retMethod == null) {
                 // if all else fails, check if parent classes have this function
-                DeadlockClass parent = c.getParent();
+                MapleDeadlockClass parent = c.getParent();
                 
                 if(parent != null) {
-                    DeadlockFunction m = parent.getTemplateMethod(true, method, argTypes);
+                    MapleDeadlockFunction m = parent.getTemplateMethod(true, method, argTypes);
                     if(m != null) {
                         retMethod = new Pair<>(m, m.getSourceClass().getMaskedTypeSet());
                         
@@ -513,20 +513,20 @@ public class DeadlockGraphMaker {
         return new Pair<>(retMethod, implementedFunctions);
     }
     
-    private static Set<Integer> getReturnType(DeadlockGraphMethod node, String method, Integer expType, List<Integer> argTypes, JavaParser.MethodCallContext methodCall) {
+    private static Set<Integer> getReturnType(MapleDeadlockGraphMethod node, String method, Integer expType, List<Integer> argTypes, JavaParser.MethodCallContext methodCall) {
         Set<Integer> ret = new HashSet<>();
-        DeadlockClass c = getClassFromType(expType);
+        MapleDeadlockClass c = getClassFromType(expType);
         
-        DeadlockFunction retMethod = null;
+        MapleDeadlockFunction retMethod = null;
         Set<Integer> retTemplateTypes = null;
         
-        Set<List<Pair<DeadlockFunction, Set<Integer>>>> allMethodImplementations = new LinkedHashSet<>();
-        Set<Pair<Pair<DeadlockFunction, Set<Integer>>, Set<Pair<DeadlockFunction, Set<Integer>>>>> metImpl = new HashSet<>();
+        Set<List<Pair<MapleDeadlockFunction, Set<Integer>>>> allMethodImplementations = new LinkedHashSet<>();
+        Set<Pair<Pair<MapleDeadlockFunction, Set<Integer>>, Set<Pair<MapleDeadlockFunction, Set<Integer>>>>> metImpl = new HashSet<>();
         
         //System.out.println("requiring return from " + expType + " method " + method);
         
         if(c == null) {
-            List<Integer> cTypes = CompoundDataTypes.get(expType);
+            List<Integer> cTypes = mapleCompoundDataTypes.get(expType);
             if(cTypes != null) {
                 int t = cTypes.get(cTypes.size() - 1);
                 if (t == -2) {
@@ -540,7 +540,7 @@ public class DeadlockGraphMaker {
                     return ret;
                 }
                 
-                metImpl.add(getTemplateMethodImplementations(c, method, expType, argTypes, ElementalDataTypes));
+                metImpl.add(getTemplateMethodImplementations(c, method, expType, argTypes, mapleElementalDataTypes));
             } else {
                 ret.add(-1);
                 return ret;
@@ -551,29 +551,29 @@ public class DeadlockGraphMaker {
                     ret.add(-2);
                     return ret;
                 } else if(method.contentEquals("ordinal")) {
-                    ret.add(ElementalTypes[0]);
+                    ret.add(mapleElementalTypes[0]);
                     return ret;
                 } else if(method.contentEquals("name")) {
-                    ret.add(ElementalTypes[3]);
+                    ret.add(mapleElementalTypes[3]);
                     return ret;
                 } else if(method.contentEquals("equals")) {
-                    ret.add(ElementalTypes[4]);
+                    ret.add(mapleElementalTypes[4]);
                     return ret;
                 }
             } else if(c.isInterface()) {
-                for(DeadlockClass sc : InheritanceTree.get(c)) {
-                    metImpl.add(getMethodImplementations(sc, method, expType, argTypes, ElementalDataTypes));
+                for(MapleDeadlockClass sc : mapleInheritanceTree.get(c)) {
+                    metImpl.add(getMethodImplementations(sc, method, expType, argTypes, mapleElementalDataTypes));
                 }
             }
             
-            metImpl.add(getMethodImplementations(c, method, expType, argTypes, ElementalDataTypes));
+            metImpl.add(getMethodImplementations(c, method, expType, argTypes, mapleElementalDataTypes));
         }
         
-        for(Pair<Pair<DeadlockFunction, Set<Integer>>, Set<Pair<DeadlockFunction, Set<Integer>>>> i : metImpl) {
+        for(Pair<Pair<MapleDeadlockFunction, Set<Integer>>, Set<Pair<MapleDeadlockFunction, Set<Integer>>>> i : metImpl) {
             allMethodImplementations.add(new LinkedList<>(i.right));
         }
         
-        //System.out.println("conflicting funct " + mdf.getName() + " on " + DeadlockStorage.getCanonClassName(mdf.getSourceClass()));
+        //System.out.println("conflicting funct " + mdf.getName() + " on " + MapleDeadlockStorage.getCanonClassName(mdf.getSourceClass()));
         //System.out.println("adding node " + fid);
         
         /*
@@ -581,27 +581,27 @@ public class DeadlockGraphMaker {
             System.out.println("DEBUG DO_gachapon");
             
             for(int i = 0; i < allMethodImplementations.size(); i++) {
-                DeadlockFunction mdf = allMethodImplementations.get(i);
+                MapleDeadlockFunction mdf = allMethodImplementations.get(i);
                 
-                System.out.println("  " + mdf.getName() + " src " + DeadlockStorage.getCanonClassName(mdf.getSourceClass()));
+                System.out.println("  " + mdf.getName() + " src " + MapleDeadlockStorage.getCanonClassName(mdf.getSourceClass()));
             }
         }
         */
         
         if(allMethodImplementations.isEmpty()) {
-            System.out.println("[Warning] EMPTY method node: " + methodCall.getText() + " @ " + method + " from " + DeadlockStorage.getCanonClassName(c));
+            System.out.println("[Warning] EMPTY method node: " + methodCall.getText() + " @ " + method + " from " + MapleDeadlockStorage.getCanonClassName(c));
         }
         
         if (!allMethodImplementations.isEmpty()) {
-            for(List<Pair<DeadlockFunction, Set<Integer>>> mi : allMethodImplementations) {
-                DeadlockGraphEntry entry = new DeadlockGraphEntry();
+            for(List<Pair<MapleDeadlockFunction, Set<Integer>>> mi : allMethodImplementations) {
+                MapleDeadlockGraphEntry entry = new MapleDeadlockGraphEntry();
 
-                for(Pair<DeadlockFunction, Set<Integer>> mip : mi) {
-                    DeadlockFunction mdf = mip.left;
+                for(Pair<MapleDeadlockFunction, Set<Integer>> mip : mi) {
+                    MapleDeadlockFunction mdf = mip.left;
                     //Set<Integer> tt = mi.right;
 
-                    Integer fid = GraphFunctionIds.get(mdf);
-                    entry.addGraphEntryPoint(new DeadlockGraphNodeCall(fid));
+                    Integer fid = mapleGraphFunctionIds.get(mdf);
+                    entry.addGraphEntryPoint(new MapleDeadlockGraphNodeCall(fid));
                 }
                 
                 node.addGraphEntry(entry);
@@ -609,8 +609,8 @@ public class DeadlockGraphMaker {
         }
         
         Set<Integer> retTypes = new HashSet<>();
-        for (Pair<Pair<DeadlockFunction, Set<Integer>>, Set<Pair<DeadlockFunction, Set<Integer>>>> i : metImpl) {
-            for (Pair<DeadlockFunction, Set<Integer>> p : i.getRight()) {
+        for (Pair<Pair<MapleDeadlockFunction, Set<Integer>>, Set<Pair<MapleDeadlockFunction, Set<Integer>>>> i : metImpl) {
+            for (Pair<MapleDeadlockFunction, Set<Integer>> p : i.getRight()) {
                 retMethod = p.left;
                 retTemplateTypes = p.right;
 
@@ -628,7 +628,7 @@ public class DeadlockGraphMaker {
             case "equals":
             case "equalsIgnoreCase":
             case "contains":
-                return ElementalTypes[4];
+                return mapleElementalTypes[4];
             
             case "valueOf":
             case "toString":
@@ -644,7 +644,7 @@ public class DeadlockGraphMaker {
             
             case "hashCode":
             case "compareTo":
-                return ElementalTypes[0];
+                return mapleElementalTypes[0];
             
             case "clone":
                 return thisType;
@@ -655,7 +655,7 @@ public class DeadlockGraphMaker {
             case "add":
             case "put":
             case "clear":
-                if(AbstractDataTypes.get(thisType) != DeadlockAbstractType.NON_ABSTRACT) {
+                if(mapleAbstractDataTypes.get(thisType) != MapleDeadlockAbstractType.NON_ABSTRACT) {
                     return -2;
                 }
                 
@@ -668,7 +668,7 @@ public class DeadlockGraphMaker {
         }
     }
     
-    private static Set<Integer> getMethodReturnType(DeadlockGraphMethod node, Integer classType, JavaParser.MethodCallContext methodCall, DeadlockFunction sourceMethod, DeadlockClass sourceClass) {
+    private static Set<Integer> getMethodReturnType(MapleDeadlockGraphMethod node, Integer classType, JavaParser.MethodCallContext methodCall, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass) {
         Set<Integer> retTypes = new HashSet<>();
         
         if(classType == -2) {
@@ -680,13 +680,13 @@ public class DeadlockGraphMaker {
         List<Integer> argTypes = getArgumentTypes(node, methodCall.expressionList(), sourceMethod, sourceClass);
         String methodName = methodCall.IDENTIFIER().getText();
         
-        if(!ReflectedClasses.containsKey(classType)) {
-            DeadlockAbstractType absType = AbstractDataTypes.get(classType);
+        if(!mapleReflectedClasses.containsKey(classType)) {
+            MapleDeadlockAbstractType absType = mapleAbstractDataTypes.get(classType);
             if(absType != null) {
                 Integer ret = evaluateAbstractFunction(node, methodName, argTypes, classType, absType);
                 retTypes.add(ret);
                 
-                //if(ret == -1 && absType != DeadlockAbstractType.LOCK) System.out.println("SOMETHING OUT OF CALL FOR " + methodCall.IDENTIFIER().getText() + " ON " + absType /*+ dataNames.get(expType)*/);
+                //if(ret == -1 && absType != MapleDeadlockAbstractType.LOCK) System.out.println("SOMETHING OUT OF CALL FOR " + methodCall.IDENTIFIER().getText() + " ON " + absType /*+ dataNames.get(expType)*/);
                 return retTypes;
             } else {
                 retTypes = getReturnType(node, methodName, classType, argTypes, methodCall);
@@ -699,18 +699,18 @@ public class DeadlockGraphMaker {
             }
         } else {
             // follows the return-type pattern for the reflected classes, that returns an specific type if a method name has been recognized, returns the default otherwise
-            Pair<Integer, Map<String, Integer>> reflectedData = ReflectedClasses.get(classType);
+            Pair<Integer, Map<String, Integer>> reflectedData = mapleReflectedClasses.get(classType);
             
             if(methodName.contentEquals("toString")) {
-                retTypes.add(ElementalTypes[3]);
+                retTypes.add(mapleElementalTypes[3]);
             } else {
-                DeadlockAbstractType absType = AbstractDataTypes.get(classType);
+                MapleDeadlockAbstractType absType = mapleAbstractDataTypes.get(classType);
                 if(absType != null) {
-                    if (absType == DeadlockAbstractType.LOCK || absType == DeadlockAbstractType.SCRIPT) {
+                    if (absType == MapleDeadlockAbstractType.LOCK || absType == MapleDeadlockAbstractType.SCRIPT) {
                         Integer ret = evaluateAbstractFunction(node, methodName, argTypes, classType, absType);
                         retTypes.add(ret);
 
-                        //if(ret == -1 && absType != DeadlockAbstractType.LOCK) System.out.println("SOMETHING OUT OF CALL FOR " + methodCall.IDENTIFIER().getText() + " ON " + absType /*+ dataNames.get(expType)*/);
+                        //if(ret == -1 && absType != MapleDeadlockAbstractType.LOCK) System.out.println("SOMETHING OUT OF CALL FOR " + methodCall.IDENTIFIER().getText() + " ON " + absType /*+ dataNames.get(expType)*/);
                         return retTypes;
                     }
                 }
@@ -725,26 +725,26 @@ public class DeadlockGraphMaker {
     }
     
     private static Integer getPrimitiveType(JavaParser.PrimitiveTypeContext ctx) {
-        if(ctx.INT() != null || ctx.SHORT() != null || ctx.LONG() != null || ctx.BYTE() != null) return ElementalTypes[0];
-        if(ctx.FLOAT() != null || ctx.DOUBLE() != null) return ElementalTypes[1];
-        if(ctx.CHAR() != null) return ElementalTypes[2];
-        if(ctx.BOOLEAN() != null) return ElementalTypes[4];
+        if(ctx.INT() != null || ctx.SHORT() != null || ctx.LONG() != null || ctx.BYTE() != null) return mapleElementalTypes[0];
+        if(ctx.FLOAT() != null || ctx.DOUBLE() != null) return mapleElementalTypes[1];
+        if(ctx.CHAR() != null) return mapleElementalTypes[2];
+        if(ctx.BOOLEAN() != null) return mapleElementalTypes[4];
         
         return -2;
     }
     
-    private static Integer getDereferencedType(String derTypeName, DeadlockClass derClass) {
-        Integer derType = DereferencedDataTypes.get(derTypeName);
+    private static Integer getDereferencedType(String derTypeName, MapleDeadlockClass derClass) {
+        Integer derType = mapleDereferencedDataTypes.get(derTypeName);
         if(derType != null) return derType;
         
-        if (derClass == null) derType = BasicDataTypeIds.get(derTypeName);
-        else derType = ClassDataTypeIds.get(derClass);
+        if (derClass == null) derType = mapleBasicDataTypeIds.get(derTypeName);
+        else derType = mapleClassDataTypeIds.get(derClass);
         
-        DereferencedDataTypes.put(derTypeName, derType);
+        mapleDereferencedDataTypes.put(derTypeName, derType);
         return derType;
     }
     
-    private static void skimArrayInitializer(JavaParser.ArrayInitializerContext ainiCtx, DeadlockGraphMethod node, DeadlockFunction sourceMethod, DeadlockClass sourceClass) {
+    private static void skimArrayInitializer(JavaParser.ArrayInitializerContext ainiCtx, MapleDeadlockGraphMethod node, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass) {
         // just process expressions inside and add them to the function graph, disregard return values
         
         for(JavaParser.VariableInitializerContext var : ainiCtx.variableInitializer()) {
@@ -756,7 +756,7 @@ public class DeadlockGraphMaker {
         }
     }
     
-    private static Set<Integer> parseMethodCalls(DeadlockGraphMethod node, JavaParser.ExpressionContext call, DeadlockFunction sourceMethod, DeadlockClass sourceClass) {
+    private static Set<Integer> parseMethodCalls(MapleDeadlockGraphMethod node, JavaParser.ExpressionContext call, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass) {
         Set<Integer> metRetTypes = parseMethodCalls(node, call, sourceMethod, sourceClass, true);
         
         Set<Integer> retTypes = new HashSet<>();
@@ -784,24 +784,24 @@ public class DeadlockGraphMaker {
 
                 if(base.contentEquals("Math")) {
                     if(methodName.contentEquals("floor") || methodName.contentEquals("ceil")) {
-                        retTypes.add(ElementalTypes[0]);
+                        retTypes.add(mapleElementalTypes[0]);
                         continue;
                     }
 
-                    retTypes.add(ElementalTypes[1]);
+                    retTypes.add(mapleElementalTypes[1]);
                     continue;
-                } else if(base.contentEquals("System") || base.contentEquals("Arrays") || base.contentEquals("Collections") || base.contentEquals("Data")) {
+                } else if(base.contentEquals("System") || base.contentEquals("Arrays") || base.contentEquals("Collections") || base.contentEquals("MapleData")) {
                     retTypes.add(-1);
                     continue;
                 } else {
-                    ret = getPreparedReturnType(methodName, ClassDataTypeIds.get(sourceClass));
+                    ret = getPreparedReturnType(methodName, mapleClassDataTypeIds.get(sourceClass));
                     if(ret != -1) {
                         retTypes.add(ret);
                         continue;
                     }
                 }
 
-                System.out.println("[Warning] COULD NOT DETERMINE " + call.getText() + " on src " + DeadlockStorage.getCanonClassName(sourceClass) + ", ret " + ret);
+                System.out.println("[Warning] COULD NOT DETERMINE " + call.getText() + " on src " + MapleDeadlockStorage.getCanonClassName(sourceClass) + ", ret " + ret);
             }
         }
         
@@ -812,7 +812,7 @@ public class DeadlockGraphMaker {
     }
     
     private static boolean isIgnoredRange(Integer type) {
-        return type >= IgnoredDataRange.left && type < IgnoredDataRange.right;
+        return type >= mapleIgnoredDataRange.left && type < mapleIgnoredDataRange.right;
     }
     
     private static boolean isIgnoredType(Integer type) {
@@ -820,7 +820,7 @@ public class DeadlockGraphMaker {
             return true;
         }
         
-        List<Integer> cType = CompoundDataTypes.get(type);
+        List<Integer> cType = mapleCompoundDataTypes.get(type);
         if(cType != null) {
             for(Integer i : cType) {
                 if(isIgnoredType(i)) {
@@ -832,13 +832,13 @@ public class DeadlockGraphMaker {
         return false;
     }
     
-    private static Integer getThisType(DeadlockClass sourceClass) {
+    private static Integer getThisType(MapleDeadlockClass sourceClass) {
         if (sourceClass == null) return null;
         
-        Integer cid = ClassDataTypeIds.get(sourceClass);
+        Integer cid = mapleClassDataTypeIds.get(sourceClass);
         if (cid != null) return cid;
 
-        for (DeadlockClass mdc : sourceClass.getSuperList()) {
+        for (MapleDeadlockClass mdc : sourceClass.getSuperList()) {
             cid = getThisType(mdc);
             if (cid != null) return cid;
         }
@@ -847,7 +847,7 @@ public class DeadlockGraphMaker {
         return cid;
     }
     
-    private static Set<Integer> parseMethodCalls(DeadlockGraphMethod node, JavaParser.ExpressionContext call, DeadlockFunction sourceMethod, DeadlockClass sourceClass, boolean filter) {
+    private static Set<Integer> parseMethodCalls(MapleDeadlockGraphMethod node, JavaParser.ExpressionContext call, MapleDeadlockFunction sourceMethod, MapleDeadlockClass sourceClass, boolean filter) {
         JavaParser.ExpressionContext curCtx = call;
         
         Set<Integer> ret = new HashSet<>();
@@ -861,7 +861,7 @@ public class DeadlockGraphMaker {
                 Set<Integer> metRetTypes = parseMethodCalls(node, expCtx, sourceMethod, sourceClass);
                 if(metRetTypes.size() > 0) {
                     for (Integer expType : metRetTypes) {
-                        if(expType == null) System.out.println("null on " + expCtx.getText() + " src is " + DeadlockStorage.getCanonClassName(sourceClass));
+                        if(expType == null) System.out.println("null on " + expCtx.getText() + " src is " + MapleDeadlockStorage.getCanonClassName(sourceClass));
                         if (curCtx.THIS() == null) {
                             if(expType != -1) {
                                 if(expType != -2) {     // expType -2 means the former expression type has been excluded from the search
@@ -870,7 +870,7 @@ public class DeadlockGraphMaker {
                                         ret.addAll(r);
 
                                         if(ret.contains(-1)) {
-                                            DeadlockClass c = getClassFromType(expType);
+                                            MapleDeadlockClass c = getClassFromType(expType);
                                             if(c != null && c.isInterface()) {  // it's an interface, there's no method implementation to be found there
                                                 ret.remove(-1);
                                                 ret.add(-2);
@@ -884,11 +884,11 @@ public class DeadlockGraphMaker {
                                             continue;
                                         }
 
-                                        DeadlockClass c = getClassFromType(expType);
+                                        MapleDeadlockClass c = getClassFromType(expType);
                                         Set<Integer> templateTypes = null;
 
                                         if(c == null) {
-                                            List<Integer> cTypes = CompoundDataTypes.get(expType);
+                                            List<Integer> cTypes = mapleCompoundDataTypes.get(expType);
                                             if(cTypes != null) {
                                                 c = getClassFromType(cTypes.get(cTypes.size() - 1));
 
@@ -900,24 +900,24 @@ public class DeadlockGraphMaker {
                                             }
 
                                             if(c == null) {
-                                                String typeName = BasicDataTypes.get(expType);
+                                                String typeName = mapleBasicDataTypes.get(expType);
 
                                                 if(typeName != null && typeName.charAt(typeName.length() - 1) == ']') {
                                                     if(curCtx.IDENTIFIER().getText().contentEquals("length")) {
-                                                        ret.add(ElementalTypes[0]);
+                                                        ret.add(mapleElementalTypes[0]);
                                                         continue;
                                                     }
                                                 }
 
                                                 //System.out.println("FAILED @ " + expType);
-                                                System.out.println("[Warning] No datatype found for " + curCtx.IDENTIFIER() + " on expression " + curCtx.getText() + " srcclass " + DeadlockStorage.getCanonClassName(sourceClass) + " detected exptype " + expType);
+                                                System.out.println("[Warning] No datatype found for " + curCtx.IDENTIFIER() + " on expression " + curCtx.getText() + " srcclass " + MapleDeadlockStorage.getCanonClassName(sourceClass) + " detected exptype " + expType);
                                                 ret.add(-2);
                                                 continue;
                                             }
                                         } else {
                                             if(c.isEnum()) {    // it's an identifier defining an specific item from an enum, return self-type
                                                 if(curCtx.IDENTIFIER().getText().contentEquals("length")) {
-                                                    ret.add(ElementalTypes[0]);
+                                                    ret.add(mapleElementalTypes[0]);
                                                     continue;
                                                 }
 
@@ -932,13 +932,13 @@ public class DeadlockGraphMaker {
                                         
                                         Integer type = getPrimaryTypeOnFieldVars(element, c);
                                         if(type == null) {
-                                            DeadlockClass mdc = DeadlockStorage.locateInternalClass(element, c);  // element could be a private class reference
+                                            MapleDeadlockClass mdc = MapleDeadlockStorage.locateInternalClass(element, c);  // element could be a private class reference
                                             if(mdc != null) {
-                                                ret.add(ClassDataTypeIds.get(mdc));
+                                                ret.add(mapleClassDataTypeIds.get(mdc));
                                                 continue;
                                             }
 
-                                            //System.out.println("SOMETHING OUT OF CALL FOR FIELD " + curCtx.IDENTIFIER().getText() + " ON " + DeadlockStorage.getCanonClassName(c));
+                                            //System.out.println("SOMETHING OUT OF CALL FOR FIELD " + curCtx.IDENTIFIER().getText() + " ON " + MapleDeadlockStorage.getCanonClassName(c));
                                             ret.add(-1);
                                             continue;
                                         }
@@ -975,7 +975,7 @@ public class DeadlockGraphMaker {
                 
                 for (Integer ret1 : s1) {
                     for (Integer ret2 : s2) {
-                        Integer expType = (ret1.equals(ElementalTypes[3]) || ret2.equals(ElementalTypes[3])) ? ElementalTypes[3] : (ret1 != -1 ? ret1 : ret2);
+                        Integer expType = (ret1.equals(mapleElementalTypes[3]) || ret2.equals(mapleElementalTypes[3])) ? mapleElementalTypes[3] : (ret1 != -1 ? ret1 : ret2);
                         ret.add(expType);
                     }
                 }
@@ -995,12 +995,12 @@ public class DeadlockGraphMaker {
                 ret.addAll(!s1.contains(-1) ? s1 : s2);
                 return ret;
             } else if(curCtx.expression().size() == 2 || curCtx.typeType() != null) {  // boolean-type expression
-                ret.add(ElementalTypes[4]);
+                ret.add(mapleElementalTypes[4]);
                 return ret;
             }
         } else if(curCtx.prefix != null || curCtx.postfix != null) {
             if(curCtx.prefix != null && curCtx.prefix.getText().contentEquals("!")) {
-                ret.add(ElementalTypes[4]);
+                ret.add(mapleElementalTypes[4]);
                 return ret;
             }
             
@@ -1011,15 +1011,15 @@ public class DeadlockGraphMaker {
             JavaParser.ExpressionContext inner = curCtx.expression(1);
             
             for (Integer outerType : parseMethodCalls(node, outer, sourceMethod, sourceClass)) {
-                DeadlockClass outerClass = ClassDataTypes.get(outerType);
+                MapleDeadlockClass outerClass = mapleClassDataTypes.get(outerType);
                 String outerName;
                 if (outerClass != null) {
-                    outerName = DeadlockStorage.getClassPath(outerClass);
+                    outerName = MapleDeadlockStorage.getClassPath(outerClass);
                 } else {
-                    outerName = BasicDataTypes.get(outerType);
+                    outerName = mapleBasicDataTypes.get(outerType);
                     
-                    outerClass = DeadlockStorage.locateClass(outerName, sourceClass);
-                    if (outerClass != null) outerType = ClassDataTypeIds.get(outerClass);
+                    outerClass = MapleDeadlockStorage.locateClass(outerName, sourceClass);
+                    if (outerClass != null) outerType = mapleClassDataTypeIds.get(outerClass);
                 }
                 
                 if (outerName.endsWith("]")) outerName = outerName.substring(0, outerName.lastIndexOf("["));
@@ -1028,11 +1028,11 @@ public class DeadlockGraphMaker {
                 if (outerName.endsWith("]")) {
                     derType = getDereferencedType(outerName, outerClass);
                 } else {
-                    DeadlockClass mdc = DeadlockStorage.locateClass(outerName, sourceClass);
+                    MapleDeadlockClass mdc = MapleDeadlockStorage.locateClass(outerName, sourceClass);
                     if (mdc != null) {
-                        derType = ClassDataTypeIds.get(mdc);
-                    } else if (BasicDataTypeIds.containsKey(outerName)) {
-                        derType = BasicDataTypeIds.get(outerName);
+                        derType = mapleClassDataTypeIds.get(mdc);
+                    } else if (mapleBasicDataTypeIds.containsKey(outerName)) {
+                        derType = mapleBasicDataTypeIds.get(outerName);
                     } else {
                         derType = -2;
                     }
@@ -1062,7 +1062,7 @@ public class DeadlockGraphMaker {
                 return ret;
             } else if(priCtx.SUPER() != null) {
                 if(!sourceClass.getSuperList().isEmpty()) {
-                    ret.add(ClassDataTypeIds.get(sourceClass.getSuperList().get(0)));
+                    ret.add(mapleClassDataTypeIds.get(sourceClass.getSuperList().get(0)));
                     return ret;
                 } else {
                     ret.add(-2);
@@ -1073,13 +1073,13 @@ public class DeadlockGraphMaker {
             parseMethodCalls(node, curCtx.expression(0), sourceMethod, sourceClass);
             String typeText = curCtx.typeType().getText();
             
-            DeadlockClass c = DeadlockStorage.locateClass(typeText, sourceClass);
+            MapleDeadlockClass c = MapleDeadlockStorage.locateClass(typeText, sourceClass);
             if(c != null) {
-                ret.add(ClassDataTypeIds.get(c));
+                ret.add(mapleClassDataTypeIds.get(c));
                 return ret;
             }
             
-            Integer i = BasicDataTypeIds.get(typeText);
+            Integer i = mapleBasicDataTypeIds.get(typeText);
             ret.add((i != null) ? i : -2);
             return ret;
         } else if(curCtx.NEW() != null) {
@@ -1110,10 +1110,10 @@ public class DeadlockGraphMaker {
                 }
                 
                 String idName = nameCtx.IDENTIFIER(0).getText();
-                DeadlockClass c = DeadlockStorage.locateClass(idName, sourceClass);
+                MapleDeadlockClass c = MapleDeadlockStorage.locateClass(idName, sourceClass);
                 
                 if(c != null && c.getMaskedTypeSet() == null) {     // if the creator is instancing a compound data type, let it throw a -2
-                    ret.add(ClassDataTypeIds.get(c));
+                    ret.add(mapleClassDataTypeIds.get(c));
                     return ret;
                 } else {
                     ret.add(-2);
@@ -1124,10 +1124,10 @@ public class DeadlockGraphMaker {
                 return ret;
             }
         } else if(curCtx.methodCall() != null) {
-            ret.addAll(getMethodReturnType(node, ClassDataTypeIds.get(sourceClass), curCtx.methodCall(), sourceMethod, sourceClass));
+            ret.addAll(getMethodReturnType(node, mapleClassDataTypeIds.get(sourceClass), curCtx.methodCall(), sourceMethod, sourceClass));
             return ret;
         } else if(curCtx.expression().size() == 2) {    // expression ('<' '<' | '>' '>' '>' | '>' '>') expression
-            ret.add(ElementalTypes[0]);
+            ret.add(mapleElementalTypes[0]);
             return ret;
         }
         
@@ -1135,41 +1135,41 @@ public class DeadlockGraphMaker {
         return ret;
     }
     
-    private static void parseMethodNode(DeadlockFunction method, DeadlockClass sourceClass) {
-        DeadlockGraphMethod node = GraphFunctions.get(method);
+    private static void parseMethodNode(MapleDeadlockFunction method, MapleDeadlockClass sourceClass) {
+        MapleDeadlockGraphMethod node = mapleGraphFunctions.get(method);
         
         for(JavaParser.ExpressionContext call : method.getMethodCalls()) {
             parseMethodCalls(node, call, method, sourceClass);
         }
     }
     
-    private static void reinstanceCachedMaps(DeadlockStorage metadata) {
+    private static void reinstanceCachedMaps(MapleDeadlockStorage metadata) {
         for(Entry<String, Integer> e : metadata.getBasicDataTypes().entrySet()) {
             Integer i = e.getValue();
             String s = e.getKey();
             
-            BasicDataTypes.put(i, s);
-            EveryDataTypes.put(i, s);
-            EveryDataTypeIds.put(s, i);
+            mapleBasicDataTypes.put(i, s);
+            mapleEveryDataTypes.put(i, s);
+            mapleEveryDataTypeIds.put(s, i);
             
-            DeadlockAbstractType aType = DeadlockAbstractType.getValue(s);
-            if(aType != DeadlockAbstractType.NON_ABSTRACT) {
-                AbstractDataTypes.put(i, aType);
+            MapleDeadlockAbstractType aType = MapleDeadlockAbstractType.getValue(s);
+            if(aType != MapleDeadlockAbstractType.NON_ABSTRACT) {
+                mapleAbstractDataTypes.put(i, aType);
             }
         }
         
-        ClassDataTypeIds = metadata.getClassDataTypes();
-        for(Entry<DeadlockClass, Integer> e : ClassDataTypeIds.entrySet()) {
+        mapleClassDataTypeIds = metadata.getClassDataTypes();
+        for(Entry<MapleDeadlockClass, Integer> e : mapleClassDataTypeIds.entrySet()) {
             Integer i = e.getValue();
-            DeadlockClass d = e.getKey();
+            MapleDeadlockClass d = e.getKey();
             
-            ClassDataTypes.put(i, d);
-            EveryDataTypes.put(i, DeadlockStorage.getCanonClassName(d));
-            EveryDataTypeIds.put(DeadlockStorage.getCanonClassName(d), i);
+            mapleClassDataTypes.put(i, d);
+            mapleEveryDataTypes.put(i, MapleDeadlockStorage.getCanonClassName(d));
+            mapleEveryDataTypeIds.put(MapleDeadlockStorage.getCanonClassName(d), i);
             
-            DeadlockAbstractType aType = DeadlockAbstractType.getValue(d.getName());
-            if(aType != DeadlockAbstractType.NON_ABSTRACT) {
-                AbstractDataTypes.put(i, aType);
+            MapleDeadlockAbstractType aType = MapleDeadlockAbstractType.getValue(d.getName());
+            if(aType != MapleDeadlockAbstractType.NON_ABSTRACT) {
+                mapleAbstractDataTypes.put(i, aType);
             }
         }
         
@@ -1177,53 +1177,53 @@ public class DeadlockGraphMaker {
             Integer i = e.getValue();
             List<Integer> d = e.getKey();
             
-            CompoundDataTypes.put(i, d);
+            mapleCompoundDataTypes.put(i, d);
             
-            DeadlockAbstractType absType = AbstractDataTypes.get(d.get(d.size() - 1));
-            if(absType != DeadlockAbstractType.NON_ABSTRACT) {
-                AbstractDataTypes.put(i, absType);
+            MapleDeadlockAbstractType absType = mapleAbstractDataTypes.get(d.get(d.size() - 1));
+            if(absType != MapleDeadlockAbstractType.NON_ABSTRACT) {
+                mapleAbstractDataTypes.put(i, absType);
             }
         }
         
-        BasicDataTypeIds = new HashMap<>();
-        for (Entry<Integer, String> e : BasicDataTypes.entrySet()) {
-            BasicDataTypeIds.put(e.getValue(), e.getKey());
+        mapleBasicDataTypeIds = new HashMap<>();
+        for (Entry<Integer, String> e : mapleBasicDataTypes.entrySet()) {
+            mapleBasicDataTypeIds.put(e.getValue(), e.getKey());
         }
     }
     
-    private static void generateMethodNodes(Map<String, Map<String, DeadlockClass>> packageClasses) {
-        for(Map<String, DeadlockClass> m : packageClasses.values()) {
-            for(DeadlockClass c : m.values()) {
-                for(DeadlockFunction f : c.getMethods()) {
+    private static void generateMethodNodes(Map<String, Map<String, MapleDeadlockClass>> packageClasses) {
+        for(Map<String, MapleDeadlockClass> m : packageClasses.values()) {
+            for(MapleDeadlockClass c : m.values()) {
+                for(MapleDeadlockFunction f : c.getMethods()) {
                     createGraphFunction(f);
                 }
             }
         }
     }
     
-    private static void generateSuperReferences(Map<String, Map<String, DeadlockClass>> packageClasses) {
-        for(Map<String, DeadlockClass> m : packageClasses.values()) {
-            for(DeadlockClass c : m.values()) {
-                Integer classId = ClassDataTypeIds.get(c);
+    private static void generateSuperReferences(Map<String, Map<String, MapleDeadlockClass>> packageClasses) {
+        for(Map<String, MapleDeadlockClass> m : packageClasses.values()) {
+            for(MapleDeadlockClass c : m.values()) {
+                Integer classId = mapleClassDataTypeIds.get(c);
                 
-                for(DeadlockClass s : c.getSuperList()) {
-                    Set<Integer> inherits = SuperClasses.get(classId);
+                for(MapleDeadlockClass s : c.getSuperList()) {
+                    Set<Integer> inherits = mapleSuperClasses.get(classId);
                     
                     if(inherits == null) {
                         inherits = new LinkedHashSet<>();
-                        SuperClasses.put(classId, inherits);
+                        mapleSuperClasses.put(classId, inherits);
                     }
                     
-                    inherits.add(ClassDataTypeIds.get(s));
+                    inherits.add(mapleClassDataTypeIds.get(s));
                 }
             }
         }
     }
     
-    private static void parseMethodNodes(Map<String, Map<String, DeadlockClass>> packageClasses) {
-        for(Map<String, DeadlockClass> m : packageClasses.values()) {
-            for(DeadlockClass c : m.values()) {
-                for(DeadlockFunction f : c.getMethods()) {
+    private static void parseMethodNodes(Map<String, Map<String, MapleDeadlockClass>> packageClasses) {
+        for(Map<String, MapleDeadlockClass> m : packageClasses.values()) {
+            for(MapleDeadlockClass c : m.values()) {
+                for(MapleDeadlockFunction f : c.getMethods()) {
                     parseMethodNode(f, c);
                 }
             }
@@ -1231,7 +1231,7 @@ public class DeadlockGraphMaker {
     }
     
     private static void parseRunnableMethodNodes() {
-        for(DeadlockFunction f : RunnableMethods) {
+        for(MapleDeadlockFunction f : mapleRunnableMethods) {
             createGraphFunction(f);
             parseMethodNode(f, f.getSourceClass());
         }
@@ -1240,10 +1240,10 @@ public class DeadlockGraphMaker {
     public static Set<Integer> generateEnumReferences() {
         Set<Integer> enumIds = new HashSet<>();
         
-        for(Map<String, DeadlockClass> m : PublicClasses.values()) {
-            for(DeadlockClass c : m.values()) {
+        for(Map<String, MapleDeadlockClass> m : maplePublicClasses.values()) {
+            for(MapleDeadlockClass c : m.values()) {
                 if(c.isEnum()) {
-                    enumIds.add(ClassDataTypeIds.get(c));
+                    enumIds.add(mapleClassDataTypeIds.get(c));
                 }
             }
         }
@@ -1252,10 +1252,10 @@ public class DeadlockGraphMaker {
     }
     
     private static Integer defineObjectSet() {
-        Integer objectId = EveryDataTypeIds.get("Object");
-        Integer setId = EveryDataTypeIds.get("Set");
+        Integer objectId = mapleEveryDataTypeIds.get("Object");
+        Integer setId = mapleEveryDataTypeIds.get("Set");
         
-        for (Entry<Integer, List<Integer>> e : CompoundDataTypes.entrySet()) {
+        for (Entry<Integer, List<Integer>> e : mapleCompoundDataTypes.entrySet()) {
             if (e.getValue().get(0).equals(objectId) && e.getValue().get(1).equals(setId)) {
                 return e.getKey();
             }
@@ -1264,69 +1264,69 @@ public class DeadlockGraphMaker {
         return -1;
     }
     
-    private static void includeAllClassesInternal(Map<String, Map<String, DeadlockClass>> map, boolean isPrivate) {
+    private static void includeAllClassesInternal(Map<String, Map<String, MapleDeadlockClass>> map, boolean isPrivate) {
         if(!isPrivate) {
-            for (Entry<String, Map<String, DeadlockClass>> e : map.entrySet()) {
+            for (Entry<String, Map<String, MapleDeadlockClass>> e : map.entrySet()) {
                 String path = e.getKey();
 
-                for (Entry<String, DeadlockClass> f : e.getValue().entrySet()) {
-                    AllClasses.put(path + f.getKey(), f.getValue());
+                for (Entry<String, MapleDeadlockClass> f : e.getValue().entrySet()) {
+                    mapleAllClasses.put(path + f.getKey(), f.getValue());
                 }    
             }
         } else {
-            for (Entry<String, Map<String, DeadlockClass>> e : map.entrySet()) {
+            for (Entry<String, Map<String, MapleDeadlockClass>> e : map.entrySet()) {
                 String path = e.getKey();
                 int idx = path.lastIndexOf('.');
                 path = path.substring(0, idx + 1);
 
-                for (Entry<String, DeadlockClass> f : e.getValue().entrySet()) {
-                    AllClasses.put(path + f.getKey(), f.getValue());
+                for (Entry<String, MapleDeadlockClass> f : e.getValue().entrySet()) {
+                    mapleAllClasses.put(path + f.getKey(), f.getValue());
                 }    
             }
         }
     }
     
     private static void includeAllClasses() {
-        includeAllClassesInternal(PublicClasses, false);
-        includeAllClassesInternal(PrivateClasses, true);
+        includeAllClassesInternal(maplePublicClasses, false);
+        includeAllClassesInternal(maplePrivateClasses, true);
     }
     
-    public static DeadlockGraph generateSourceGraph(DeadlockStorage metadata) {
+    public static MapleDeadlockGraph generateSourceGraph(MapleDeadlockStorage metadata) {
         reinstanceCachedMaps(metadata);
         objectSetId = defineObjectSet();
         
-        PublicClasses = metadata.getPublicClasses();
-        PrivateClasses = metadata.getPrivateClasses();
+        maplePublicClasses = metadata.getPublicClasses();
+        maplePrivateClasses = metadata.getPrivateClasses();
         
-        AllClasses = new HashMap<>();
+        mapleAllClasses = new HashMap<>();
         includeAllClasses();
         
-        for (DeadlockClass c : AllClasses.values()) {
+        for (MapleDeadlockClass c : mapleAllClasses.values()) {
             setImportEnums(c);
         }
         
-        Locks = metadata.getLocks();
-        ElementalDataTypes = metadata.getElementalDataTypes();
-        ElementalTypes = metadata.getElementalTypes();
-        ReflectedClasses = metadata.getReflectedClasses();
-        InheritanceTree = metadata.getInheritanceTree();
-        IgnoredDataRange = metadata.getIgnoredDataRange();
+        mapleLocks = metadata.getLocks();
+        mapleElementalDataTypes = metadata.getElementalDataTypes();
+        mapleElementalTypes = metadata.getElementalTypes();
+        mapleReflectedClasses = metadata.getReflectedClasses();
+        mapleInheritanceTree = metadata.getInheritanceTree();
+        mapleIgnoredDataRange = metadata.getIgnoredDataRange();
         
-        RunnableMethods = metadata.getRunnableMethods();
+        mapleRunnableMethods = metadata.getRunnableMethods();
         
-        EnumDataTypes = generateEnumReferences();
+        mapleEnumDataTypes = generateEnumReferences();
         
-        generateSuperReferences(PublicClasses);
-        generateSuperReferences(PrivateClasses);
+        generateSuperReferences(maplePublicClasses);
+        generateSuperReferences(maplePrivateClasses);
         
-        generateMethodNodes(PublicClasses);
-        generateMethodNodes(PrivateClasses);
+        generateMethodNodes(maplePublicClasses);
+        generateMethodNodes(maplePrivateClasses);
         
-        DeadlockFunction.installTypeReferences(ElementalDataTypes, CompoundDataTypes, SuperClasses, EnumDataTypes, IgnoredDataRange, ElementalTypes[0]);
+        MapleDeadlockFunction.installTypeReferences(mapleElementalDataTypes, mapleCompoundDataTypes, mapleSuperClasses, mapleEnumDataTypes, mapleIgnoredDataRange, mapleElementalTypes[0]);
         
         try {
-            parseMethodNodes(PublicClasses);
-            parseMethodNodes(PrivateClasses);
+            parseMethodNodes(maplePublicClasses);
+            parseMethodNodes(maplePrivateClasses);
             
             parseRunnableMethodNodes();
         } catch (Exception e) {
@@ -1340,21 +1340,21 @@ public class DeadlockGraphMaker {
             } catch(Exception ex ) {}
         }
         
-        return new DeadlockGraph(GraphFunctionIds, GraphFunctions);
+        return new MapleDeadlockGraph(mapleGraphFunctionIds, mapleGraphFunctions);
     }
     
-    private static List<Pair<Integer, Pair<DeadlockFunction, DeadlockGraphMethod>>> generateDumpEntries() {
-        List<Pair<Integer, Pair<DeadlockFunction, DeadlockGraphMethod>>> dumpData = new LinkedList<>();
+    private static List<Pair<Integer, Pair<MapleDeadlockFunction, MapleDeadlockGraphMethod>>> generateDumpEntries() {
+        List<Pair<Integer, Pair<MapleDeadlockFunction, MapleDeadlockGraphMethod>>> dumpData = new LinkedList<>();
         
-        for(Entry<DeadlockFunction, Integer> e : GraphFunctionIds.entrySet()) {
-            DeadlockGraphMethod g = GraphFunctions.get(e.getKey());
+        for(Entry<MapleDeadlockFunction, Integer> e : mapleGraphFunctionIds.entrySet()) {
+            MapleDeadlockGraphMethod g = mapleGraphFunctions.get(e.getKey());
             
             dumpData.add(new Pair<>(e.getValue(), new Pair<>(e.getKey(), g)));
         }
         
-        Collections.sort(dumpData, new Comparator<Pair<Integer, Pair<DeadlockFunction, DeadlockGraphMethod>>>() {
+        Collections.sort(dumpData, new Comparator<Pair<Integer, Pair<MapleDeadlockFunction, MapleDeadlockGraphMethod>>>() {
             @Override
-            public int compare(Pair<Integer, Pair<DeadlockFunction, DeadlockGraphMethod>> p1, Pair<Integer, Pair<DeadlockFunction, DeadlockGraphMethod>> p2) {
+            public int compare(Pair<Integer, Pair<MapleDeadlockFunction, MapleDeadlockGraphMethod>> p1, Pair<Integer, Pair<MapleDeadlockFunction, MapleDeadlockGraphMethod>> p2) {
                 int v = 0;//p1.right.right.getSourceName().compareTo(p1.right.right.getSourceName());
                 if(v == 0) v = p1.left.compareTo(p2.left);
                 
@@ -1385,60 +1385,60 @@ public class DeadlockGraphMaker {
         return s;
     }
     
-    public static Map<DeadlockFunction, DeadlockGraphMethod> getGraphEntries() {
-        return GraphFunctions;
+    public static Map<MapleDeadlockFunction, MapleDeadlockGraphMethod> getGraphEntries() {
+        return mapleGraphFunctions;
     }
     
-    public static Map<String, DeadlockLock> getGraphLocks() {
-        return Locks;
+    public static Map<String, MapleDeadlockLock> getGraphLocks() {
+        return mapleLocks;
     }
     
     public static void dumpMemory() {
-        System.out.println("ClassDataTypeIds :::::");
-        for(Entry<DeadlockClass, Integer> e : ClassDataTypeIds.entrySet()) {
-            System.out.println(DeadlockStorage.getCanonClassName(e.getKey()) + " " + e.getValue());
+        System.out.println("mapleClassDataTypeIds :::::");
+        for(Entry<MapleDeadlockClass, Integer> e : mapleClassDataTypeIds.entrySet()) {
+            System.out.println(MapleDeadlockStorage.getCanonClassName(e.getKey()) + " " + e.getValue());
         }
         
-        System.out.println("\n\nClassDataTypes :::::");
-        for(Entry<Integer, DeadlockClass> e : ClassDataTypes.entrySet()) {
-            System.out.println(e.getKey() + " " + DeadlockStorage.getCanonClassName(e.getValue()));
+        System.out.println("\n\nmapleClassDataTypes :::::");
+        for(Entry<Integer, MapleDeadlockClass> e : mapleClassDataTypes.entrySet()) {
+            System.out.println(e.getKey() + " " + MapleDeadlockStorage.getCanonClassName(e.getValue()));
         }
         
-        System.out.println("\n\nBasicDataTypeIds :::::");
-        for(Entry<String, Integer> e : BasicDataTypeIds.entrySet()) {
+        System.out.println("\n\nmapleBasicDataTypeIds :::::");
+        for(Entry<String, Integer> e : mapleBasicDataTypeIds.entrySet()) {
             System.out.println(e.getKey() + " " + e.getValue());
         }
         
-        System.out.println("\n\nBasicDataTypes :::::");
-        for(Entry<Integer, String> e : BasicDataTypes.entrySet()) {
+        System.out.println("\n\nmapleBasicDataTypes :::::");
+        for(Entry<Integer, String> e : mapleBasicDataTypes.entrySet()) {
             System.out.println(e.getKey() + " " + e.getValue());
         }
         
-        System.out.println("\n\nCompoundDataTypeIds :::::");
-        for(Entry<Integer, List<Integer>> e : CompoundDataTypes.entrySet()) {
-            System.out.println(translateId(EveryDataTypes, e.getKey()) + " " + translateId(EveryDataTypes, e.getValue()));
+        System.out.println("\n\nmapleCompoundDataTypeIds :::::");
+        for(Entry<Integer, List<Integer>> e : mapleCompoundDataTypes.entrySet()) {
+            System.out.println(translateId(mapleEveryDataTypes, e.getKey()) + " " + translateId(mapleEveryDataTypes, e.getValue()));
         }
         
-        System.out.println("\n\nAbstractDataTypes :::::");
-        for(Entry<Integer, DeadlockAbstractType> e : AbstractDataTypes.entrySet()) {
-            System.out.println(translateId(EveryDataTypes, e.getKey()) + " " + e.getValue());
+        System.out.println("\n\nmapleAbstractDataTypes :::::");
+        for(Entry<Integer, MapleDeadlockAbstractType> e : mapleAbstractDataTypes.entrySet()) {
+            System.out.println(translateId(mapleEveryDataTypes, e.getKey()) + " " + e.getValue());
         }
         
-        System.out.println("\n\nDereferencedDataTypes :::::");
-        for(Entry<String, Integer> e : DereferencedDataTypes.entrySet()) {
-            System.out.println(e.getKey() + " " + translateId(EveryDataTypes, e.getValue()));
+        System.out.println("\n\nmapleDereferencedDataTypes :::::");
+        for(Entry<String, Integer> e : mapleDereferencedDataTypes.entrySet()) {
+            System.out.println(e.getKey() + " " + translateId(mapleEveryDataTypes, e.getValue()));
         }
     }
     
     public static void dumpGraph() {
-        List<Pair<Integer, Pair<DeadlockFunction, DeadlockGraphMethod>>> dumpData = generateDumpEntries();
+        List<Pair<Integer, Pair<MapleDeadlockFunction, MapleDeadlockGraphMethod>>> dumpData = generateDumpEntries();
         
-        for(Pair<Integer, Pair<DeadlockFunction, DeadlockGraphMethod>> e : dumpData) {
-            List<DeadlockGraphEntry> list = e.right.right.getEntryList();
+        for(Pair<Integer, Pair<MapleDeadlockFunction, MapleDeadlockGraphMethod>> e : dumpData) {
+            List<MapleDeadlockGraphEntry> list = e.right.right.getEntryList();
             
             if(list.size() > 0) {
-                System.out.println(DeadlockStorage.getCanonClassName(e.right.left.getSourceClass()) + " >> " + e.right.left.getName() + " id: " + e.left);
-                for(DeadlockGraphEntry n : list) {
+                System.out.println(MapleDeadlockStorage.getCanonClassName(e.right.left.getSourceClass()) + " >> " + e.right.left.getName() + " id: " + e.left);
+                for(MapleDeadlockGraphEntry n : list) {
                     System.out.print(n.getGraphEntryPoints() + " ");
                 }
                 System.out.println("\n");

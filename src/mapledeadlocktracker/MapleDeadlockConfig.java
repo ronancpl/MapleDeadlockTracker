@@ -1,5 +1,5 @@
 /*
-    This file is part of the DeadlockTracker detection tool
+    This file is part of the MapleDeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
@@ -9,22 +9,24 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package deadlocktracker.graph;
+package mapledeadlocktracker;
+
+import java.util.Properties;
 
 /**
  *
  * @author RonanLana
  */
-public class DeadlockGraphNodeCall extends DeadlockGraphNode {
-    Integer callFid;
+public class MapleDeadlockConfig {
     
-    public DeadlockGraphNodeCall(Integer fid) {
-        super(fid, DeadlockGraphNodeType.CALL, -1);
-        callFid = fid;
+    private static Properties prop;
+        
+    public static String getProperty(String key) {
+        return prop.getProperty(key);
     }
     
-    @Override
-    public String toString() {
-        return "C" + callFid;
+    public static void loadProperties(Properties properties) {
+        prop = properties;
     }
+    
 }

@@ -1,5 +1,5 @@
 /*
-    This file is part of the DeadlockTracker detection tool
+    This file is part of the MapleDeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
@@ -9,7 +9,7 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package deadlocktracker.containers;
+package mapledeadlocktracker.containers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,70 +25,70 @@ import java.util.regex.Pattern;
  *
  * @author RonanLana
  */
-public class DeadlockStorage {
-    private static Map<String, Map<String, DeadlockClass>> PublicClasses = new HashMap<>();
-    private static Map<String, Map<String, DeadlockClass>> PrivateClasses = new HashMap<>();
-    private static Map<String, DeadlockLock> Locks = new HashMap<>();
-    private static Map<String, DeadlockLock> ReadWriteLocks = new HashMap<>();
+public class MapleDeadlockStorage {
+    private static Map<String, Map<String, MapleDeadlockClass>> maplePublicClasses = new HashMap<>();
+    private static Map<String, Map<String, MapleDeadlockClass>> maplePrivateClasses = new HashMap<>();
+    private static Map<String, MapleDeadlockLock> mapleLocks = new HashMap<>();
+    private static Map<String, MapleDeadlockLock> mapleReadWriteLocks = new HashMap<>();
     
-    private static Map<DeadlockClass, Integer> ClassDataTypes = new HashMap<>();
-    private static Map<List<Integer>, Integer> CompoundDataTypes = new HashMap<>();
-    private static Map<String, Integer> BasicDataTypes = new HashMap<>();
-    private static Map<Integer, Integer> ElementalDataTypes = new HashMap<>();
-    private static Integer[] ElementalTypes = new Integer[8];
+    private static Map<MapleDeadlockClass, Integer> mapleClassDataTypes = new HashMap<>();
+    private static Map<List<Integer>, Integer> mapleCompoundDataTypes = new HashMap<>();
+    private static Map<String, Integer> mapleBasicDataTypes = new HashMap<>();
+    private static Map<Integer, Integer> mapleElementalDataTypes = new HashMap<>();
+    private static Integer[] mapleElementalTypes = new Integer[8];
     
-    private static Map<Integer, Pair<Integer, Map<String, Integer>>> ReflectedClasses = new HashMap<>();
-    private static Map<DeadlockClass, List<DeadlockClass>> InheritanceTree = new HashMap<>();
+    private static Map<Integer, Pair<Integer, Map<String, Integer>>> mapleReflectedClasses = new HashMap<>();
+    private static Map<MapleDeadlockClass, List<MapleDeadlockClass>> mapleInheritanceTree = new HashMap<>();
     private static Pair<Integer, Integer> ignoredDataRange = null;
     
-    private static List<DeadlockFunction> RunnableMethods = new ArrayList<>();
+    private static List<MapleDeadlockFunction> mapleRunnableMethods = new ArrayList<>();
     
-    public static Map<String, Map<String, DeadlockClass>> getPublicClasses() {
-        return PublicClasses;
+    public static Map<String, Map<String, MapleDeadlockClass>> getPublicClasses() {
+        return maplePublicClasses;
     }
     
-    public static Map<String, Map<String, DeadlockClass>> getPrivateClasses() {
-        return PrivateClasses;
+    public static Map<String, Map<String, MapleDeadlockClass>> getPrivateClasses() {
+        return maplePrivateClasses;
     }
     
-    public Map<String, DeadlockLock> getLocks() {
-        return Locks;
+    public Map<String, MapleDeadlockLock> getLocks() {
+        return mapleLocks;
     }
     
-    public Map<String, DeadlockLock> getReadWriteLocks() {
-        return ReadWriteLocks;
+    public Map<String, MapleDeadlockLock> getReadWriteLocks() {
+        return mapleReadWriteLocks;
     }
     
-    public Map<DeadlockClass, Integer> getClassDataTypes() {
-        return ClassDataTypes;
+    public Map<MapleDeadlockClass, Integer> getClassDataTypes() {
+        return mapleClassDataTypes;
     }
     
     public Map<List<Integer>, Integer> getCompoundDataTypes() {
-        return CompoundDataTypes;
+        return mapleCompoundDataTypes;
     }
     
     public static Map<String, Integer> getBasicDataTypes() {
-        return BasicDataTypes;
+        return mapleBasicDataTypes;
     }
     
     public Map<Integer, Integer> getElementalDataTypes() {
-        return ElementalDataTypes;
+        return mapleElementalDataTypes;
     }
     
     public Integer[] getElementalTypes() {
-        return ElementalTypes;
+        return mapleElementalTypes;
     }
     
-    public Map<DeadlockClass, List<DeadlockClass>> getInheritanceTree() {
-        return InheritanceTree;
+    public Map<MapleDeadlockClass, List<MapleDeadlockClass>> getInheritanceTree() {
+        return mapleInheritanceTree;
     }
     
     public Map<Integer, Pair<Integer, Map<String, Integer>>> getReflectedClasses() {
-        return ReflectedClasses;
+        return mapleReflectedClasses;
     }
     
-    public List<DeadlockFunction> getRunnableMethods() {
-        return RunnableMethods;
+    public List<MapleDeadlockFunction> getRunnableMethods() {
+        return mapleRunnableMethods;
     }
     
     public void setIgnoredDataRange(Pair<Integer, Integer> ign) {
@@ -99,23 +99,23 @@ public class DeadlockStorage {
         return ignoredDataRange;
     }
     
-    private static DeadlockClass locateSubclass(String className, DeadlockClass thisClass) {
+    private static MapleDeadlockClass locateSubclass(String className, MapleDeadlockClass thisClass) {
         return thisClass.getPrivateClass(className);
     }
     
-    public static DeadlockClass locateInternalClass(String className, DeadlockClass thisClass) {
+    public static MapleDeadlockClass locateInternalClass(String className, MapleDeadlockClass thisClass) {
         return locateThroughSuper(className, thisClass);
     }
     
-    private static DeadlockClass locateThroughSuper(String className, DeadlockClass thisClass) {
+    private static MapleDeadlockClass locateThroughSuper(String className, MapleDeadlockClass thisClass) {
         //System.out.println("testing " + className + " on " + thisClass.getPackageName() + thisClass.getName());
         if(thisClass.getName().contentEquals(className)) return thisClass;
         
-        DeadlockClass pc = locateSubclass(className, thisClass);
+        MapleDeadlockClass pc = locateSubclass(className, thisClass);
         if(pc != null) return pc;
         
-        for(DeadlockClass mdc : thisClass.getSuperList()) {
-            DeadlockClass m = locateThroughSuper(className, mdc);
+        for(MapleDeadlockClass mdc : thisClass.getSuperList()) {
+            MapleDeadlockClass m = locateThroughSuper(className, mdc);
             
             if(m != null) {
                 return m;
@@ -125,31 +125,31 @@ public class DeadlockStorage {
         return null;
     }
     
-    private static DeadlockClass locateImportedClass(String fullClassName, DeadlockClass thisClass) {
+    private static MapleDeadlockClass locateImportedClass(String fullClassName, MapleDeadlockClass thisClass) {
         return thisClass.getImport(fullClassName);
     }
     
-    private static DeadlockClass locateThroughPackage(String fullClassName, DeadlockClass thisClass) {
+    private static MapleDeadlockClass locateThroughPackage(String fullClassName, MapleDeadlockClass thisClass) {
         String pname = thisClass.getPackageName();
         
         if(pname.charAt(pname.length() - 1) == '.') {
-            Map<String, DeadlockClass> m = PublicClasses.get(pname);
+            Map<String, MapleDeadlockClass> m = maplePublicClasses.get(pname);
             return (m != null) ? m.get(fullClassName) : null;
         } else {
-            DeadlockClass ret = PrivateClasses.get(pname).get(fullClassName);
+            MapleDeadlockClass ret = maplePrivateClasses.get(pname).get(fullClassName);
             
             if(ret == null) {   // test on the package of the parent
                 int idx = pname.lastIndexOf('.');
                 pname = pname.substring(0, idx + 1);
                 
-                ret = PublicClasses.get(pname).get(fullClassName);
+                ret = maplePublicClasses.get(pname).get(fullClassName);
             }
             
             return ret;
         }
     }
     
-    public static String getCanonClassName(DeadlockClass mdc) {
+    public static String getCanonClassName(MapleDeadlockClass mdc) {
         String packName = mdc.getPackageName();
         
         if(packName.charAt(packName.length() - 1) == '.') {
@@ -174,9 +174,9 @@ public class DeadlockStorage {
             
             int s = 0;
             for (i = 1; i < names.length; i++) {
-                if(PublicClasses.get(cname) != null) {
+                if(maplePublicClasses.get(cname) != null) {
                     s = 1;
-                } else if(PrivateClasses.get(cname.substring(0, cname.length() - 1)) != null) {
+                } else if(maplePrivateClasses.get(cname.substring(0, cname.length() - 1)) != null) {
                     break;
                 }
                 cname += names[i] + ".";
@@ -191,13 +191,13 @@ public class DeadlockStorage {
         }
     }
     
-    private static Set<String> fetchPackageNamesFromImports(DeadlockClass thisClass) {
+    private static Set<String> fetchPackageNamesFromImports(MapleDeadlockClass thisClass) {
         Set<String> packNames = new HashSet<>();
-        for (DeadlockClass mdc : thisClass.getImportClasses()) {
+        for (MapleDeadlockClass mdc : thisClass.getImportClasses()) {
             packNames.add(mdc.getPackageName());
         }
         
-        DeadlockClass parentClass = thisClass.getParent();
+        MapleDeadlockClass parentClass = thisClass.getParent();
         if (parentClass != null) {
             packNames.add(parentClass.getPackageName());
             packNames.addAll(fetchPackageNamesFromImports(parentClass));
@@ -206,13 +206,13 @@ public class DeadlockStorage {
         return packNames;
     }
     
-    public static DeadlockClass locatePublicClass(String fullClassName, DeadlockClass thisClass) {
+    public static MapleDeadlockClass locatePublicClass(String fullClassName, MapleDeadlockClass thisClass) {
         int idx = fullClassName.lastIndexOf('.');
         
         String packName = fullClassName.substring(0, idx + 1);
         String className = fullClassName.substring(idx + 1);
         
-        Map<String, DeadlockClass> m = PublicClasses.get(packName);
+        Map<String, MapleDeadlockClass> m = maplePublicClasses.get(packName);
         if (m != null) {
             return m.get(className);
         }
@@ -220,9 +220,9 @@ public class DeadlockStorage {
         if (thisClass != null) {
             Set<String> packNames = fetchPackageNamesFromImports(thisClass);
             for (String pname : packNames) {
-                m = PublicClasses.get(pname);
+                m = maplePublicClasses.get(pname);
                 if (m != null) {
-                    DeadlockClass mdc = m.get(className);
+                    MapleDeadlockClass mdc = m.get(className);
                     if (mdc != null) {
                         return mdc;
                     }
@@ -233,10 +233,10 @@ public class DeadlockStorage {
         return null;    // could be classes not implemented on the project source scope
     }
     
-    public static DeadlockClass locateClassInternal(String fullClassName, DeadlockClass thisClass) {
+    public static MapleDeadlockClass locateClassInternal(String fullClassName, MapleDeadlockClass thisClass) {
         if(thisClass == null) return null;
         
-        DeadlockClass ret;
+        MapleDeadlockClass ret;
         String className = fullClassName.substring(fullClassName.indexOf(".") + 1);
         
         //check self class
@@ -275,7 +275,7 @@ public class DeadlockStorage {
         return "";
     }
     
-    public static String getNameFromCanonClass(DeadlockClass mdc) {
+    public static String getNameFromCanonClass(MapleDeadlockClass mdc) {
         return getNameFromCanonClass(getClassPath(mdc));
     }
     
@@ -285,9 +285,9 @@ public class DeadlockStorage {
         int idx = s.length(), idx3 = s.length();
         
         String t = "", u = "";
-        Map<String, DeadlockClass> m;
+        Map<String, MapleDeadlockClass> m;
         while(true) {
-            if(PrivateClasses.containsKey(s)) {
+            if(maplePrivateClasses.containsKey(s)) {
                 u = fullClassName.substring(Math.max(s.lastIndexOf('.', s.length() - 1) + 1, 0), idx3 + 1);
                 fullClassName = fullClassName.substring(idx3 + 1);
                 break;
@@ -304,7 +304,7 @@ public class DeadlockStorage {
             s = fullClassName.substring(0, idx);
         }
         
-        m = PrivateClasses.get(s);
+        m = maplePrivateClasses.get(s);
         idx = 0;
         if(m != null) {
             while(true) {
@@ -325,7 +325,7 @@ public class DeadlockStorage {
         return new Pair<>(s, u + t);
     }
     
-    private static DeadlockClass locatePrivateClass(String fullClassName, DeadlockClass thisClass) {
+    private static MapleDeadlockClass locatePrivateClass(String fullClassName, MapleDeadlockClass thisClass) {
         String packName = thisClass.getPackageName(), className;
         if (!fullClassName.startsWith(packName)) return null;
         
@@ -333,13 +333,13 @@ public class DeadlockStorage {
         packName = p.left;
         className = p.right;
         
-        DeadlockClass ret = PrivateClasses.get(packName).get(className);
+        MapleDeadlockClass ret = maplePrivateClasses.get(packName).get(className);
         return ret;
     }
     
     public static String getPublicPackageName(String s) {
         while (true) {
-            if (PublicClasses.get(s) != null) return s;
+            if (maplePublicClasses.get(s) != null) return s;
             
             int i = s.substring(0, s.length() - 1).lastIndexOf('.');
             if (i < 0) return null;
@@ -348,12 +348,12 @@ public class DeadlockStorage {
         }
     }
     
-    public static String getPublicPackageName(DeadlockClass thisClass) {
+    public static String getPublicPackageName(MapleDeadlockClass thisClass) {
         String s = thisClass.getPackageName();
         return getPublicPackageName(s);
     }
     
-    public static String getClassPath(DeadlockClass mdc) {
+    public static String getClassPath(MapleDeadlockClass mdc) {
         return mdc.getPackageName() + (mdc.getPackageName().endsWith(".") ? "" : ".") + mdc.getPathName();
     }
     
@@ -364,7 +364,7 @@ public class DeadlockStorage {
             String className = fullClassName.substring(idx);
             if (className.contentEquals("*")) return new Pair<>(packName, className);
             
-            DeadlockClass c = PublicClasses.get(packName).get(className);
+            MapleDeadlockClass c = maplePublicClasses.get(packName).get(className);
             if (c != null) return new Pair<>(packName, className);
             
             return locatePrivateClassPath(packName, fullClassName);
@@ -373,24 +373,24 @@ public class DeadlockStorage {
         return null;
     }
     
-    public static DeadlockClass locateClass(String fullClassName) {
+    public static MapleDeadlockClass locateClass(String fullClassName) {
         int idx = Math.max(fullClassName.lastIndexOf('.'), 0);
         
         String packName = getPublicPackageName(fullClassName);
         String className = fullClassName.substring(idx + 1);
         
-        DeadlockClass c = PublicClasses.get(packName).get(className);
+        MapleDeadlockClass c = maplePublicClasses.get(packName).get(className);
         if (c != null) return c;
         
         packName = fullClassName.substring(0, idx);
-        return PrivateClasses.get(packName).get(className);
+        return maplePrivateClasses.get(packName).get(className);
     }
     
-    public static DeadlockClass locateClass(String className, DeadlockClass thisClass) {
+    public static MapleDeadlockClass locateClass(String className, MapleDeadlockClass thisClass) {
         if(thisClass == null || className == null) return null;
-        //System.out.println("locating "  + className + " from " + DeadlockStorage.getCanonClassName(thisClass));
+        //System.out.println("locating "  + className + " from " + MapleDeadlockStorage.getCanonClassName(thisClass));
         
-        DeadlockClass ret = locateClassInternal(className, thisClass);
+        MapleDeadlockClass ret = locateClassInternal(className, thisClass);
         if (ret != null) return ret;
         
         String fullClassName = className;
@@ -419,10 +419,10 @@ public class DeadlockStorage {
     }
     
     private static String dumpCachedImports() {
-        String s = "--------\n PUBLIC IMPORTS:\n";
-        for(Entry<String, Map<String, DeadlockClass>> m : PublicClasses.entrySet()) {
+        String s = "--------\nMaple PUBLIC IMPORTS:\n";
+        for(Entry<String, Map<String, MapleDeadlockClass>> m : maplePublicClasses.entrySet()) {
             s += ("\nPACKAGE " + m.getKey() + "\n");
-            for(Entry<String, DeadlockClass> c : m.getValue().entrySet()) {
+            for(Entry<String, MapleDeadlockClass> c : m.getValue().entrySet()) {
                 s += ("\t" + c.getValue().getPathName() + "\n");
                 for(String i : c.getValue().getImportNames()) {
                     s += ("\t\t" + i + "\n");
@@ -434,18 +434,18 @@ public class DeadlockStorage {
     }
     
     private static String dumpCachedPackages() {
-        String s = "--------\n PUBLIC:\n";
-        for(Entry<String, Map<String, DeadlockClass>> m : PublicClasses.entrySet()) {
+        String s = "--------\nMaple PUBLIC:\n";
+        for(Entry<String, Map<String, MapleDeadlockClass>> m : maplePublicClasses.entrySet()) {
             s += ("\nPACKAGE " + m.getKey() + "\n");
-            for(Entry<String, DeadlockClass> c : m.getValue().entrySet()) {
+            for(Entry<String, MapleDeadlockClass> c : m.getValue().entrySet()) {
                 s += ("\t" + c.getValue().getPathName() + " Super: " + c.getValue().getSuperNameList() + "\n");
             }
         }
         
-        s += "--------\n PRIVATES:\n";
-        for(Entry<String, Map<String, DeadlockClass>> m : PrivateClasses.entrySet()) {
+        s += "--------\nMaple PRIVATES:\n";
+        for(Entry<String, Map<String, MapleDeadlockClass>> m : maplePrivateClasses.entrySet()) {
             s += ("\nINCLASS " + m.getKey() + "\n");
-            for(Entry<String, DeadlockClass> c : m.getValue().entrySet()) {
+            for(Entry<String, MapleDeadlockClass> c : m.getValue().entrySet()) {
                 s += ("\t" + c.getValue().getPathName() + "\n");
             }
         }
@@ -459,28 +459,28 @@ public class DeadlockStorage {
         
         //s += dumpCachedPackages() + "\n" + dumpCachedImports();
                 
-        s += "--------\n LOCKS:\n";
-        for(Map.Entry<String, DeadlockLock> l : Locks.entrySet()) {
+        s += "--------\nMaple LOCKS:\n";
+        for(Map.Entry<String, MapleDeadlockLock> l : mapleLocks.entrySet()) {
             s += (l.getKey() + " -> " + l.getValue() + "\n");
         }
         
-        s += "--------\n READWRITELOCKS:\n";
-        for(Map.Entry<String, DeadlockLock> l : ReadWriteLocks.entrySet()) {
+        s += "--------\nMaple READWRITELOCKS:\n";
+        for(Map.Entry<String, MapleDeadlockLock> l : mapleReadWriteLocks.entrySet()) {
             s += (l.getKey() + " -> " + l.getValue() + "\n");
         }
         
-        s += "\n basic data types: \n";
-        for(Map.Entry<String, Integer> e : BasicDataTypes.entrySet()) {
+        s += "\nMaple basic data types: \n";
+        for(Map.Entry<String, Integer> e : mapleBasicDataTypes.entrySet()) {
             s += e.getKey() + " " + e.getValue() + "\n";
         }
         
-        s += "\n class data types: \n";
-        for(Map.Entry<DeadlockClass, Integer> e : ClassDataTypes.entrySet()) {
+        s += "\nMaple class data types: \n";
+        for(Map.Entry<MapleDeadlockClass, Integer> e : mapleClassDataTypes.entrySet()) {
             s += getCanonClassName(e.getKey()) + " " + e.getValue() + "\n";
         }
         
-        s += "\n compound data types: \n";
-        for(Map.Entry<List<Integer>, Integer> e : CompoundDataTypes.entrySet()) {
+        s += "\nMaple compound data types: \n";
+        for(Map.Entry<List<Integer>, Integer> e : mapleCompoundDataTypes.entrySet()) {
             s += e.getKey() + " : " + e.getValue() + "\n";
         }
         

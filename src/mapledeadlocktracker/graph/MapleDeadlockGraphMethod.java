@@ -1,5 +1,5 @@
 /*
-    This file is part of the DeadlockTracker detection tool
+    This file is part of the MapleDeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
@@ -9,7 +9,7 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package deadlocktracker.graph;
+package mapledeadlocktracker.graph;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -18,18 +18,18 @@ import java.util.List;
  *
  * @author RonanLana
  */
-public class DeadlockGraphMethod {
+public class MapleDeadlockGraphMethod {
     String srcName;
     
     int id;
-    List<DeadlockGraphEntry> entryNodes = new LinkedList<>();
+    List<MapleDeadlockGraphEntry> entryNodes = new LinkedList<>();
     
-    public DeadlockGraphMethod(int id, String srcName) {
+    public MapleDeadlockGraphMethod(int id, String srcName) {
         this.id = id;
         this.srcName = srcName;
     }
     
-    public void addGraphEntry(DeadlockGraphEntry e) {
+    public void addGraphEntry(MapleDeadlockGraphEntry e) {
         entryNodes.add(e);
     }
     
@@ -41,7 +41,7 @@ public class DeadlockGraphMethod {
         return srcName;
     }
     
-    public List<DeadlockGraphEntry> getEntryList() {
+    public List<MapleDeadlockGraphEntry> getEntryList() {
         return entryNodes;
     }
     

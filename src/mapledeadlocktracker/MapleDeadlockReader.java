@@ -1,5 +1,5 @@
 /*
-    This file is part of the DeadlockTracker detection tool
+    This file is part of the MapleDeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
@@ -9,7 +9,7 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package deadlocktracker;
+package mapledeadlocktracker;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,17 +24,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javalexer.JavaLexer;
 import javaparser.JavaParser;
 import javaparser.JavaParserBaseListener;
-import deadlocktracker.containers.DeadlockClass;
-import deadlocktracker.containers.DeadlockClass.DeadlockClassType;
-import deadlocktracker.containers.DeadlockEnum;
-import deadlocktracker.containers.DeadlockFunction;
-import deadlocktracker.containers.DeadlockLock;
-import deadlocktracker.containers.DeadlockStorage;
-import deadlocktracker.containers.Pair;
-import deadlocktracker.graph.DeadlockAbstractType;
-import deadlocktracker.strings.IgnoredTypes;
-import deadlocktracker.strings.LinkedTypes;
-import deadlocktracker.strings.ReflectedTypes;
+import mapledeadlocktracker.containers.MapleDeadlockClass;
+import mapledeadlocktracker.containers.MapleDeadlockClass.MapleDeadlockClassType;
+import mapledeadlocktracker.containers.MapleDeadlockEnum;
+import mapledeadlocktracker.containers.MapleDeadlockFunction;
+import mapledeadlocktracker.containers.MapleDeadlockLock;
+import mapledeadlocktracker.containers.MapleDeadlockStorage;
+import mapledeadlocktracker.containers.Pair;
+import mapledeadlocktracker.graph.MapleDeadlockAbstractType;
+import mapledeadlocktracker.strings.MapleIgnoredTypes;
+import mapledeadlocktracker.strings.MapleLinkedTypes;
+import mapledeadlocktracker.strings.MapleReflectedTypes;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -43,30 +43,30 @@ import org.antlr.v4.runtime.ParserRuleContext;
  *
  * @author RonanLana
  */
-public class DeadlockReader extends JavaParserBaseListener {
-    private static DeadlockStorage storage = new DeadlockStorage();
+public class MapleDeadlockReader extends JavaParserBaseListener {
+    private static MapleDeadlockStorage storage = new MapleDeadlockStorage();
     private static String syncLockTypeName = "SyncLock";
     
     // ---- cached storage fields ----
-    private static Map<String, Map<String, DeadlockClass>> PublicClasses = storage.getPublicClasses();
-    private static Map<String, Map<String, DeadlockClass>> PrivateClasses = storage.getPrivateClasses();
+    private static Map<String, Map<String, MapleDeadlockClass>> maplePublicClasses = storage.getPublicClasses();
+    private static Map<String, Map<String, MapleDeadlockClass>> maplePrivateClasses = storage.getPrivateClasses();
     
-    private static Map<String, DeadlockLock> Locks = storage.getLocks();
-    private static Map<String, DeadlockLock> ReadWriteLocks = storage.getReadWriteLocks();
+    private static Map<String, MapleDeadlockLock> mapleLocks = storage.getLocks();
+    private static Map<String, MapleDeadlockLock> mapleReadWriteLocks = storage.getReadWriteLocks();
     
-    private static Map<DeadlockClass, Integer> ClassDataTypes = storage.getClassDataTypes();
-    private static Map<List<Integer>, Integer> CompoundDataTypes = storage.getCompoundDataTypes();
-    private static Map<String, Integer> BasicDataTypes = storage.getBasicDataTypes();
-    private static Map<Integer, Integer> ElementalDataTypes = storage.getElementalDataTypes();
-    private static Integer[] ElementalTypes = storage.getElementalTypes();
+    private static Map<MapleDeadlockClass, Integer> mapleClassDataTypes = storage.getClassDataTypes();
+    private static Map<List<Integer>, Integer> mapleCompoundDataTypes = storage.getCompoundDataTypes();
+    private static Map<String, Integer> mapleBasicDataTypes = storage.getBasicDataTypes();
+    private static Map<Integer, Integer> mapleElementalDataTypes = storage.getElementalDataTypes();
+    private static Integer[] mapleElementalTypes = storage.getElementalTypes();
     
-    private static Map<DeadlockClass, List<DeadlockClass>> InheritanceTree = storage.getInheritanceTree();
-    private static Map<Integer, Pair<Integer, Map<String, Integer>>> ReflectedClasses = storage.getReflectedClasses();
+    private static Map<MapleDeadlockClass, List<MapleDeadlockClass>> mapleInheritanceTree = storage.getInheritanceTree();
+    private static Map<Integer, Pair<Integer, Map<String, Integer>>> mapleReflectedClasses = storage.getReflectedClasses();
     
-    private static Map<DeadlockFunction, Boolean> RunnableFunctions = new HashMap<>();
-    private static List<DeadlockFunction> RunnableMethods = storage.getRunnableMethods();
+    private static Map<MapleDeadlockFunction, Boolean> mapleRunnableFunctions = new HashMap<>();
+    private static List<MapleDeadlockFunction> mapleRunnableMethods = storage.getRunnableMethods();
     
-    //private static Map<Integer, String> CompoundDataNames = new HashMap();   // test purposes only
+    //private static Map<Integer, String> mapleCompoundDataNames = new HashMap();   // test purposes only
     
     // ---- volatile fields ----
     
@@ -76,8 +76,8 @@ public class DeadlockReader extends JavaParserBaseListener {
     private static AtomicInteger runningMethodCallCount = new AtomicInteger(0);
     
     private static Stack<Integer> methodCallCountStack = new Stack();
-    private static Stack<DeadlockFunction> methodStack = new Stack();
-    private static List<DeadlockClass> classStack = new ArrayList();
+    private static Stack<MapleDeadlockFunction> methodStack = new Stack();
+    private static List<MapleDeadlockClass> classStack = new ArrayList();
     private static Stack<Integer> syncLockStack = new Stack();
     
     private static Set<String> readLockWaitingSet = new HashSet();
@@ -86,16 +86,16 @@ public class DeadlockReader extends JavaParserBaseListener {
     private static Map<String, String> readLockQueue = new HashMap();
     private static Map<String, String> writeLockQueue = new HashMap();
     
-    private static Map<Integer, String> LinkedDataNames = new HashMap();
+    private static Map<Integer, String> mapleLinkedDataNames = new HashMap();
     
     private static List<String> currentImportList = new ArrayList<>();
     private static String currentPackageName;
     private static String currentCompleteFileClassName;
-    private static DeadlockClass currentClass = null;
-    private static List<DeadlockClass> customClasses = new LinkedList<>();
+    private static MapleDeadlockClass currentClass = null;
+    private static List<MapleDeadlockClass> customClasses = new LinkedList<>();
     private static boolean currentAbstract = false;
     
-    private static Map<Integer, Pair<DeadlockClass, Integer>> volatileMaskedTypes = new HashMap<>();
+    private static Map<Integer, Pair<MapleDeadlockClass, Integer>> volatileMaskedTypes = new HashMap<>();
     private static Map<Integer, Pair<String, String>> volatileDataTypes = new HashMap<>();  // cannot recover the import classes at the first parsing, so the type definition comes at the second rundown
     
     @Override
@@ -128,7 +128,7 @@ public class DeadlockReader extends JavaParserBaseListener {
         if(ctx.memberDeclaration() != null) {
             currentAbstract = hasAbstractModifier(ctx.modifier());
         } else if(ctx.block() != null) {
-            DeadlockFunction method = new DeadlockFunction("class", currentClass, null, false);
+            MapleDeadlockFunction method = new MapleDeadlockFunction("class", currentClass, null, false);
             
             method.setMethodMetadata(-1, new LinkedList<Integer>(), new HashMap<Long, Integer>());
             methodStack.add(method);
@@ -200,7 +200,7 @@ public class DeadlockReader extends JavaParserBaseListener {
     private static String getPathName(String className) {
         String path = "";
         
-        for(DeadlockClass mdc : classStack) {
+        for(MapleDeadlockClass mdc : classStack) {
             path += mdc.getName() + ".";
         }
         path += className;
@@ -219,10 +219,10 @@ public class DeadlockReader extends JavaParserBaseListener {
             List<String> supNames = new LinkedList<>();
             supNames.add(currentClass.getName());
 
-            currentClass = new DeadlockClass(DeadlockClassType.CLASS, className, currentPackageName, getPathName(className), supNames, false, currentClass);
+            currentClass = new MapleDeadlockClass(MapleDeadlockClassType.CLASS, className, currentPackageName, getPathName(className), supNames, false, currentClass);
             customClasses.add(currentClass);
 
-            InheritanceTree.put(currentClass, new LinkedList<>());
+            mapleInheritanceTree.put(currentClass, new LinkedList<>());
         }
     }
     
@@ -231,13 +231,13 @@ public class DeadlockReader extends JavaParserBaseListener {
         if (ctx.createdName().IDENTIFIER().size() > 0 && ctx.classCreatorRest() != null && ctx.classCreatorRest().classBody() != null) {
             String fcn = currentCompleteFileClassName;
             
-            if (PrivateClasses.containsKey(fcn)) {
-                PrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
+            if (maplePrivateClasses.containsKey(fcn)) {
+                maplePrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
             } else {
-                PrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
+                maplePrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
             }
             
-            DeadlockClass mdc = currentClass;
+            MapleDeadlockClass mdc = currentClass;
             currentClass = classStack.remove(classStack.size() - 1);
             currentClass.addPrivateClass(mdc.getName(), mdc);
         }
@@ -253,10 +253,10 @@ public class DeadlockReader extends JavaParserBaseListener {
             List<String> supNames = new LinkedList<>();
             supNames.add(currentClass.getName());
 
-            currentClass = new DeadlockClass(DeadlockClassType.CLASS, className, currentPackageName, getPathName(className), supNames, false, currentClass);
+            currentClass = new MapleDeadlockClass(MapleDeadlockClassType.CLASS, className, currentPackageName, getPathName(className), supNames, false, currentClass);
             customClasses.add(currentClass);
 
-            InheritanceTree.put(currentClass, new LinkedList<>());
+            mapleInheritanceTree.put(currentClass, new LinkedList<>());
         }
     }
     
@@ -264,13 +264,13 @@ public class DeadlockReader extends JavaParserBaseListener {
     public void exitInnerCreator(JavaParser.InnerCreatorContext ctx) {
         if (ctx.classCreatorRest() != null && ctx.classCreatorRest().classBody() != null) {
             String fcn = currentCompleteFileClassName;
-            if (PrivateClasses.containsKey(fcn)) {
-                PrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
+            if (maplePrivateClasses.containsKey(fcn)) {
+                maplePrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
             } else {
-                PrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
+                maplePrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
             }
 
-            DeadlockClass mdc = currentClass;
+            MapleDeadlockClass mdc = currentClass;
             currentClass = classStack.remove(classStack.size() - 1);
             currentClass.addPrivateClass(mdc.getName(), mdc);
         }
@@ -296,13 +296,13 @@ public class DeadlockReader extends JavaParserBaseListener {
         
         if(currentClass != null) {
             classStack.add(currentClass);
-            currentClass = new DeadlockClass(DeadlockClassType.CLASS, className, currentPackageName, getPathName(className), superNames, isAbstract, currentClass);
+            currentClass = new MapleDeadlockClass(MapleDeadlockClassType.CLASS, className, currentPackageName, getPathName(className), superNames, isAbstract, currentClass);
         } else {
             currentCompleteFileClassName = currentPackageName + className;
-            currentClass = new DeadlockClass(DeadlockClassType.CLASS, className, currentPackageName, getPathName(className), superNames, isAbstract, null);
+            currentClass = new MapleDeadlockClass(MapleDeadlockClassType.CLASS, className, currentPackageName, getPathName(className), superNames, isAbstract, null);
         }
         
-        InheritanceTree.put(currentClass, new LinkedList<>());
+        mapleInheritanceTree.put(currentClass, new LinkedList<>());
         
         JavaParser.TypeParametersContext maskCtx = ctx.typeParameters();
         if(maskCtx != null) {
@@ -322,23 +322,23 @@ public class DeadlockReader extends JavaParserBaseListener {
                 currentClass.addImport(s);
             }
             
-            if(PublicClasses.containsKey(currentPackageName)) {
-                PublicClasses.get(currentPackageName).put(currentClass.getPathName(), currentClass);
+            if(maplePublicClasses.containsKey(currentPackageName)) {
+                maplePublicClasses.get(currentPackageName).put(currentClass.getPathName(), currentClass);
             } else {
-                PublicClasses.put(currentPackageName, newPackageClass(currentClass.getPathName(), currentClass));
+                maplePublicClasses.put(currentPackageName, newPackageClass(currentClass.getPathName(), currentClass));
             }
             
             currentClass = null;
         } else {
             String fcn = currentCompleteFileClassName;
             
-            if(PrivateClasses.containsKey(fcn)) {
-                PrivateClasses.get(fcn).put(getPathName(currentClass.getName()), currentClass);
+            if(maplePrivateClasses.containsKey(fcn)) {
+                maplePrivateClasses.get(fcn).put(getPathName(currentClass.getName()), currentClass);
             } else {
-                PrivateClasses.put(fcn, newPackageClass(getPathName(currentClass.getName()), currentClass));
+                maplePrivateClasses.put(fcn, newPackageClass(getPathName(currentClass.getName()), currentClass));
             }
             
-            DeadlockClass mdc = currentClass;
+            MapleDeadlockClass mdc = currentClass;
             currentClass = classStack.remove(classStack.size() - 1);
             currentClass.addPrivateClass(mdc.getName(), mdc);
         }
@@ -353,13 +353,13 @@ public class DeadlockReader extends JavaParserBaseListener {
         
         if(currentClass != null) {
             classStack.add(currentClass);
-            currentClass = new DeadlockEnum(className, currentPackageName, getPathName(className), superNames, currentClass);
+            currentClass = new MapleDeadlockEnum(className, currentPackageName, getPathName(className), superNames, currentClass);
         } else {
             currentCompleteFileClassName = currentPackageName + className;
-            currentClass = new DeadlockEnum(className, currentPackageName, getPathName(className), superNames, null);
+            currentClass = new MapleDeadlockEnum(className, currentPackageName, getPathName(className), superNames, null);
         }
         
-        InheritanceTree.put(currentClass, new LinkedList<>());
+        mapleInheritanceTree.put(currentClass, new LinkedList<>());
     }
     
     @Override
@@ -369,23 +369,23 @@ public class DeadlockReader extends JavaParserBaseListener {
                 currentClass.addImport(s);
             }
             
-            if(PublicClasses.containsKey(currentPackageName)) {
-                PublicClasses.get(currentPackageName).put(currentClass.getPathName(), currentClass);
+            if(maplePublicClasses.containsKey(currentPackageName)) {
+                maplePublicClasses.get(currentPackageName).put(currentClass.getPathName(), currentClass);
             } else {
-                PublicClasses.put(currentPackageName, newPackageClass(currentClass.getPathName(), currentClass));
+                maplePublicClasses.put(currentPackageName, newPackageClass(currentClass.getPathName(), currentClass));
             }
             
             currentClass = null;
         } else {
             String fcn = currentCompleteFileClassName;
             
-            if(PrivateClasses.containsKey(fcn)) {
-                PrivateClasses.get(fcn).put(getPathName(currentClass.getName()), currentClass);
+            if(maplePrivateClasses.containsKey(fcn)) {
+                maplePrivateClasses.get(fcn).put(getPathName(currentClass.getName()), currentClass);
             } else {
-                PrivateClasses.put(fcn, newPackageClass(getPathName(currentClass.getName()), currentClass));
+                maplePrivateClasses.put(fcn, newPackageClass(getPathName(currentClass.getName()), currentClass));
             }
             
-            DeadlockClass mdc = currentClass;
+            MapleDeadlockClass mdc = currentClass;
             currentClass = classStack.remove(classStack.size() - 1);
             currentClass.addPrivateClass(mdc.getName(), mdc);
         }
@@ -393,7 +393,7 @@ public class DeadlockReader extends JavaParserBaseListener {
     
     @Override
     public void enterEnumConstant(JavaParser.EnumConstantContext ctx) {
-        DeadlockEnum mde = (DeadlockEnum) currentClass;
+        MapleDeadlockEnum mde = (MapleDeadlockEnum) currentClass;
         mde.addEnumItem(ctx.IDENTIFIER().getText());
     }
     
@@ -406,13 +406,13 @@ public class DeadlockReader extends JavaParserBaseListener {
         
         if(currentClass != null) {
             classStack.add(currentClass);
-            currentClass = new DeadlockClass(DeadlockClassType.INTERFACE, className, currentPackageName, getPathName(className), superNames, true, currentClass);
+            currentClass = new MapleDeadlockClass(MapleDeadlockClassType.INTERFACE, className, currentPackageName, getPathName(className), superNames, true, currentClass);
         } else {
             currentCompleteFileClassName = currentPackageName + className;
-            currentClass = new DeadlockClass(DeadlockClassType.INTERFACE, className, currentPackageName, getPathName(className), superNames, true, null);
+            currentClass = new MapleDeadlockClass(MapleDeadlockClassType.INTERFACE, className, currentPackageName, getPathName(className), superNames, true, null);
         }
         
-        InheritanceTree.put(currentClass, new LinkedList<>());
+        mapleInheritanceTree.put(currentClass, new LinkedList<>());
     }
     
     @Override
@@ -422,23 +422,23 @@ public class DeadlockReader extends JavaParserBaseListener {
                 currentClass.addImport(s);
             }
             
-            if(PublicClasses.containsKey(currentPackageName)) {
-                PublicClasses.get(currentPackageName).put(currentClass.getPathName(), currentClass);
+            if(maplePublicClasses.containsKey(currentPackageName)) {
+                maplePublicClasses.get(currentPackageName).put(currentClass.getPathName(), currentClass);
             } else {
-                PublicClasses.put(currentPackageName, newPackageClass(currentClass.getPathName(), currentClass));
+                maplePublicClasses.put(currentPackageName, newPackageClass(currentClass.getPathName(), currentClass));
             }
             
             currentClass = null;
         } else {
             String fcn = currentCompleteFileClassName;
             
-            if(PrivateClasses.containsKey(fcn)) {
-                PrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
+            if(maplePrivateClasses.containsKey(fcn)) {
+                maplePrivateClasses.get(fcn).put(currentClass.getPathName(), currentClass);
             } else {
-                PrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
+                maplePrivateClasses.put(fcn, newPackageClass(currentClass.getPathName(), currentClass));
             }
             
-            DeadlockClass mdc = currentClass;
+            MapleDeadlockClass mdc = currentClass;
             currentClass = classStack.remove(classStack.size() - 1);
             currentClass.addPrivateClass(mdc.getName(), mdc);
         }
@@ -464,8 +464,8 @@ public class DeadlockReader extends JavaParserBaseListener {
         }
     }
     
-    private static Map<String, DeadlockClass> newPackageClass(String s, DeadlockClass c) {
-        Map<String, DeadlockClass> m = new HashMap<>();
+    private static Map<String, MapleDeadlockClass> newPackageClass(String s, MapleDeadlockClass c) {
+        Map<String, MapleDeadlockClass> m = new HashMap<>();
         m.put(s, c);
         
         return m;
@@ -475,7 +475,7 @@ public class DeadlockReader extends JavaParserBaseListener {
     public void enterMethodDeclaration(JavaParser.MethodDeclarationContext ctx) {
         String methodName = ctx.IDENTIFIER().getText();
         
-        DeadlockFunction method = new DeadlockFunction(methodName, currentClass, methodStack.isEmpty() ? null : methodStack.peek(), currentAbstract);
+        MapleDeadlockFunction method = new MapleDeadlockFunction(methodName, currentClass, methodStack.isEmpty() ? null : methodStack.peek(), currentAbstract);
         Pair<Integer, Pair<List<Integer>, Map<Long, Integer>>> retParamTypes = getMethodMetadata(ctx, method);
         
         method.setMethodMetadata(retParamTypes.left, retParamTypes.right.left, retParamTypes.right.right);
@@ -487,13 +487,13 @@ public class DeadlockReader extends JavaParserBaseListener {
     
     @Override
     public void exitMethodDeclaration(JavaParser.MethodDeclarationContext ctx) {
-        DeadlockFunction method = methodStack.pop();
+        MapleDeadlockFunction method = methodStack.pop();
         
         String methodName = method.getName();
         if(methodName.contentEquals("run") && method.getParameters().isEmpty()) {
             // book-keeping possible Runnable functions to be dealt with later on the parsing
             
-            RunnableFunctions.put(method, !methodStack.isEmpty());
+            mapleRunnableFunctions.put(method, !methodStack.isEmpty());
         } else {
             JavaParser.ClassBodyDeclarationContext par;
             if(ctx.getParent() instanceof JavaParser.MemberDeclarationContext) {
@@ -523,7 +523,7 @@ public class DeadlockReader extends JavaParserBaseListener {
     public void enterConstructorDeclaration(JavaParser.ConstructorDeclarationContext ctx) {
         String methodName = ctx.IDENTIFIER().getText();
         
-        DeadlockFunction method = new DeadlockFunction(methodName, currentClass, null, false);
+        MapleDeadlockFunction method = new MapleDeadlockFunction(methodName, currentClass, null, false);
         Pair<List<Integer>, Map<Long, Integer>> pTypes = getMethodParameterTypes(ctx.formalParameters(), method);
         
         method.setMethodMetadata(-1, pTypes.left, pTypes.right);
@@ -532,7 +532,7 @@ public class DeadlockReader extends JavaParserBaseListener {
     
     @Override
     public void exitConstructorDeclaration(JavaParser.ConstructorDeclarationContext ctx) {
-        DeadlockFunction method = methodStack.pop();
+        MapleDeadlockFunction method = methodStack.pop();
         currentClass.addClassMethod(method);
     }
     
@@ -676,7 +676,7 @@ public class DeadlockReader extends JavaParserBaseListener {
     }
     
     private static void addMethodsFromExpressionList(List<JavaParser.ExpressionContext> list) {
-        DeadlockFunction mdf = methodStack.peek();
+        MapleDeadlockFunction mdf = methodStack.peek();
         
         for(JavaParser.ExpressionContext exp : list) {
             if(exp.methodCall() != null || hasMethodCall(exp)) {
@@ -685,14 +685,14 @@ public class DeadlockReader extends JavaParserBaseListener {
         }
     }
     
-    private static Pair<Integer, Pair<List<Integer>, Map<Long, Integer>>> getMethodMetadata(JavaParser.MethodDeclarationContext ctx, DeadlockFunction method) {
+    private static Pair<Integer, Pair<List<Integer>, Map<Long, Integer>>> getMethodMetadata(JavaParser.MethodDeclarationContext ctx, MapleDeadlockFunction method) {
         Integer type = getTypeId(ctx.typeTypeOrVoid().getText(), currentCompleteFileClassName);
         Pair<List<Integer>, Map<Long, Integer>> params = getMethodParameterTypes(ctx.formalParameters(), method);
         
         return new Pair<>(type, params);
     }
     
-    private static Pair<List<Integer>, Map<Long, Integer>> getMethodParameterTypes(JavaParser.FormalParametersContext ctx, DeadlockFunction method) {
+    private static Pair<List<Integer>, Map<Long, Integer>> getMethodParameterTypes(JavaParser.FormalParametersContext ctx, MapleDeadlockFunction method) {
         Map<Long, Integer> params = new HashMap<>();
         List<Integer> pTypes = new LinkedList<>();
         
@@ -755,20 +755,20 @@ public class DeadlockReader extends JavaParserBaseListener {
         }
     }
     
-    private static void processLocalVariableDeclarations(String typeText, List<JavaParser.VariableDeclaratorContext> vdList, DeadlockFunction method) {
+    private static void processLocalVariableDeclarations(String typeText, List<JavaParser.VariableDeclaratorContext> vdList, MapleDeadlockFunction method) {
         for(JavaParser.VariableDeclaratorContext vd : vdList) {
             processLocalVariableDeclaratorId(typeText, vd.variableDeclaratorId(), method);
         }
     }
     
-    private static void processLocalVariableDeclaratorId(String typeText, JavaParser.VariableDeclaratorIdContext vi, DeadlockFunction method) {
+    private static void processLocalVariableDeclaratorId(String typeText, JavaParser.VariableDeclaratorIdContext vi, MapleDeadlockFunction method) {
         String tt = getFullTypeText(typeText, vi.getText());    
         int type = getTypeId(tt, currentCompleteFileClassName);
         
         method.addLocalVariable(type, vi.IDENTIFIER().getText());
     }
     
-    private static void processLocalVariableDeclaratorId(String typeText, String identifier, DeadlockFunction method) {
+    private static void processLocalVariableDeclaratorId(String typeText, String identifier, MapleDeadlockFunction method) {
         int type = getTypeId(typeText, currentCompleteFileClassName);
         
         method.addLocalVariable(type, identifier);
@@ -844,80 +844,80 @@ public class DeadlockReader extends JavaParserBaseListener {
         boolean isRead = typeText.contains("Read");
         boolean isWrite = typeText.contains("Write");
 
-        String lockName = DeadlockStorage.getCanonClassName(currentClass) + "." + name;
-        String  refName = DeadlockStorage.getCanonClassName(currentClass) + "." + reference;
+        String lockName = MapleDeadlockStorage.getCanonClassName(currentClass) + "." + name;
+        String  refName = MapleDeadlockStorage.getCanonClassName(currentClass) + "." + reference;
         
         //System.out.println("Parsing lock : '" + typeText + "' name: '" + lockName + "' ref: '" + refName + "'");
         
         if(isRead && isWrite) {
-            DeadlockLock rwLock = instanceNewLock(lockName);
+            MapleDeadlockLock rwLock = instanceNewLock(lockName);
             
             String queued;
             queued = readLockQueue.remove(lockName);
             if(queued != null) {
-                Locks.put(queued, rwLock);
+                mapleLocks.put(queued, rwLock);
             } else {
                 readLockWaitingSet.add(lockName);
             }
             
             queued = writeLockQueue.remove(lockName);
             if(queued != null) {
-                Locks.put(queued, rwLock);
+                mapleLocks.put(queued, rwLock);
             } else {
                 writeLockWaitingSet.add(lockName);
             }
             
-            ReadWriteLocks.put(lockName, rwLock);
+            mapleReadWriteLocks.put(lockName, rwLock);
         } else if(isRead) {
             if(reference != null) {
                 if(!readLockWaitingSet.remove(refName)) {
                     readLockQueue.put(refName, lockName);
                 } else {
-                    Locks.put(lockName, ReadWriteLocks.get(refName));
+                    mapleLocks.put(lockName, mapleReadWriteLocks.get(refName));
                 }
             } else {
-                Locks.put(lockName, null);
+                mapleLocks.put(lockName, null);
             }
         } else if(isWrite) {
             if(reference != null) {
                 if(!writeLockWaitingSet.remove(refName)) {
                     writeLockQueue.put(refName, lockName);
                 } else {
-                    Locks.put(lockName, ReadWriteLocks.get(refName));
+                    mapleLocks.put(lockName, mapleReadWriteLocks.get(refName));
                 }
             } else {
-                Locks.put(lockName, null);
+                mapleLocks.put(lockName, null);
             }
         } else {
-            Locks.put(lockName, instanceNewLock(lockName));
+            mapleLocks.put(lockName, instanceNewLock(lockName));
         }
     }
     
-    private static DeadlockLock instanceNewLock(String lockName) {
-        return new DeadlockLock(runningId.getAndIncrement(), lockName);
+    private static MapleDeadlockLock instanceNewLock(String lockName) {
+        return new MapleDeadlockLock(runningId.getAndIncrement(), lockName);
     }
     
-    private static DeadlockClass getPublicClass(String packageName, String className) {
-        DeadlockClass mdc = PublicClasses.get(packageName).get(className);
+    private static MapleDeadlockClass getPublicClass(String packageName, String className) {
+        MapleDeadlockClass mdc = maplePublicClasses.get(packageName).get(className);
         
         //if(mdc == null) System.out.println("FAILED TO FIND PUBLIC '" + className + "' @ '" + packageName + "'");
         return mdc;
     }
     
-    private static DeadlockClass getPrivateClass(String packageName, String className) {
+    private static MapleDeadlockClass getPrivateClass(String packageName, String className) {
         //System.out.println("trying " + packageName + " on " + className);
-        Map<String, DeadlockClass> m = PrivateClasses.get(packageName);
-        DeadlockClass mdc = (m != null) ? m.get(className) : null;
+        Map<String, MapleDeadlockClass> m = maplePrivateClasses.get(packageName);
+        MapleDeadlockClass mdc = (m != null) ? m.get(className) : null;
         
         //if(mdc == null) System.out.println("FAILED TO FIND PRIVATE '" + className + "' @ '" + packageName + "'");
         return mdc;
     }
     
-    private static List<DeadlockClass> getAllPrivateClassesWithin(String treeName, Map<String, DeadlockClass> privateMap) {
-        List<DeadlockClass> list = new LinkedList<>();
+    private static List<MapleDeadlockClass> getAllPrivateClassesWithin(String treeName, Map<String, MapleDeadlockClass> privateMap) {
+        List<MapleDeadlockClass> list = new LinkedList<>();
         
         if (privateMap != null) {
-            for(Entry<String, DeadlockClass> m : privateMap.entrySet()) {
+            for(Entry<String, MapleDeadlockClass> m : privateMap.entrySet()) {
                 if(m.getKey().startsWith(treeName)) {
                     list.add(m.getValue());
                 }
@@ -928,7 +928,7 @@ public class DeadlockReader extends JavaParserBaseListener {
     }
     
     private static boolean isEnumClass(String packageName, String className) {
-        DeadlockClass mdc = getPrivateClass(packageName, className);
+        MapleDeadlockClass mdc = getPrivateClass(packageName, className);
         if(mdc != null) {
             return mdc.isEnum();
         }
@@ -936,23 +936,23 @@ public class DeadlockReader extends JavaParserBaseListener {
         return false;
     }
     
-    private static void parseImportClass(DeadlockClass mdc) {
+    private static void parseImportClass(MapleDeadlockClass mdc) {
         for(String s : mdc.getImportNames()) {
-            Pair<String, String> p = DeadlockStorage.locateClassPath(s);
+            Pair<String, String> p = MapleDeadlockStorage.locateClassPath(s);
             if(p != null) {
                 String packageName = p.left;
                 String className = p.right;
 
-                Map<String, DeadlockClass> m = PublicClasses.get(packageName);
+                Map<String, MapleDeadlockClass> m = maplePublicClasses.get(packageName);
 
                 if(m != null) {
                     mdc.removeImport(s);    // changing full names for class name
 
                     if(!className.contentEquals("*")) {
-                        DeadlockClass importedClass = getPublicClass(packageName, className);
+                        MapleDeadlockClass importedClass = getPublicClass(packageName, className);
                         mdc.updateImport(importedClass.getPackageName() + importedClass.getPathName(), s, importedClass);
                     } else {
-                        for(DeadlockClass packClass : m.values()) {
+                        for(MapleDeadlockClass packClass : m.values()) {
                             if (mdc != packClass) {
                                 mdc.updateImport(packClass.getPackageName() + packClass.getPathName(), s, packClass);
                             }
@@ -967,17 +967,17 @@ public class DeadlockReader extends JavaParserBaseListener {
                         if(idx != -1) {
                             s = s.substring(0, idx);
 
-                            for(DeadlockClass packClass : getAllPrivateClassesWithin(className.substring(0, idx - 1), PrivateClasses.get(packageName))) {
+                            for(MapleDeadlockClass packClass : getAllPrivateClassesWithin(className.substring(0, idx - 1), maplePrivateClasses.get(packageName))) {
                                 mdc.updateImport(packClass.getPackageName() + packClass.getPathName(), s, packClass);
                             }
                         } else {
-                            DeadlockClass importedClass = getPrivateClass(packageName, className);
+                            MapleDeadlockClass importedClass = getPrivateClass(packageName, className);
                             if(importedClass != null) {
                                 mdc.updateImport(importedClass.getPackageName() + importedClass.getPathName(), s, importedClass);
                             }
                         }
                     } else {
-                        DeadlockClass importedClass = getPrivateClass(packageName, className);
+                        MapleDeadlockClass importedClass = getPrivateClass(packageName, className);
                         mdc.updateImport(importedClass.getPackageName() + importedClass.getPathName(), s, importedClass);
                     }
                 }
@@ -986,24 +986,24 @@ public class DeadlockReader extends JavaParserBaseListener {
     }
     
     private static void parseImportClasses() {
-        for(Map<String, DeadlockClass> mdp : PublicClasses.values()) {
-            for(DeadlockClass mdc : mdp.values()) {
+        for(Map<String, MapleDeadlockClass> mdp : maplePublicClasses.values()) {
+            for(MapleDeadlockClass mdc : mdp.values()) {
                 parseImportClass(mdc);
             }
         }
         
-        for(Entry<String, Map<String, DeadlockClass>> e : PrivateClasses.entrySet()) {
+        for(Entry<String, Map<String, MapleDeadlockClass>> e : maplePrivateClasses.entrySet()) {
             String pc = e.getKey();
             
-            Pair<String, String> p = DeadlockStorage.locateClassPath(pc);
+            Pair<String, String> p = MapleDeadlockStorage.locateClassPath(pc);
             String packName = p.left;
             String className = p.right;
             
-            DeadlockClass mdc = PublicClasses.get(packName).get(className);
+            MapleDeadlockClass mdc = maplePublicClasses.get(packName).get(className);
             
-            for(DeadlockClass c : e.getValue().values()) {
-                for(Pair<String, DeadlockClass> s: mdc.getImports()) {
-                    if(s.right != null) c.addImport(DeadlockStorage.getCanonClassName(s.right));
+            for(MapleDeadlockClass c : e.getValue().values()) {
+                for(Pair<String, MapleDeadlockClass> s: mdc.getImports()) {
+                    if(s.right != null) c.addImport(MapleDeadlockStorage.getCanonClassName(s.right));
                     else c.addImport(s.left);
                 }
                 
@@ -1012,25 +1012,25 @@ public class DeadlockReader extends JavaParserBaseListener {
         }
     }
     
-    private static void parseSuperClasses(Map<String, Map<String, DeadlockClass>> classes) {
-        for(Map<String, DeadlockClass> m : classes.values()) {
-            for(DeadlockClass mdc : m.values()) {
-                DeadlockClass mdc2 = DeadlockStorage.locateClass(DeadlockStorage.getNameFromCanonClass(mdc), mdc);
+    private static void parseSuperClasses(Map<String, Map<String, MapleDeadlockClass>> classes) {
+        for(Map<String, MapleDeadlockClass> m : classes.values()) {
+            for(MapleDeadlockClass mdc : m.values()) {
+                MapleDeadlockClass mdc2 = MapleDeadlockStorage.locateClass(MapleDeadlockStorage.getNameFromCanonClass(mdc), mdc);
                 
                 List<String> superNames = mdc.getSuperNameList();
                 for(String supName : superNames) {
-                    DeadlockClass parent = mdc.getParent();
+                    MapleDeadlockClass parent = mdc.getParent();
                     if(parent != null && mdc2.isInterface() && supName.contentEquals(parent.getName())) {
-                        List<DeadlockClass> list = InheritanceTree.get(mdc2);
+                        List<MapleDeadlockClass> list = mapleInheritanceTree.get(mdc2);
                         if(list != null) {
                             list.add(parent);
                         }
                     } else {
-                        DeadlockClass sup = mdc.getImport(supName);
+                        MapleDeadlockClass sup = mdc.getImport(supName);
                         if (mdc2 != sup && sup != null) {
                             mdc2.addSuper(sup);
 
-                            List<DeadlockClass> list = InheritanceTree.get(mdc2);
+                            List<MapleDeadlockClass> list = mapleInheritanceTree.get(mdc2);
                             if(list != null) {
                                 list.add(sup);
                             }
@@ -1040,9 +1040,9 @@ public class DeadlockReader extends JavaParserBaseListener {
                     }
                 }
                 
-                DeadlockClass parent = mdc2.getParent();
+                MapleDeadlockClass parent = mdc2.getParent();
                 if(parent != null) {
-                    List<DeadlockClass> list = InheritanceTree.get(parent);
+                    List<MapleDeadlockClass> list = mapleInheritanceTree.get(parent);
                     if(list != null) {
                         list.add(mdc2);
                     }
@@ -1088,18 +1088,18 @@ public class DeadlockReader extends JavaParserBaseListener {
     }
     
     private static Integer filterDataType(Integer ret) {
-        Integer e = ElementalDataTypes.get(ret);
+        Integer e = mapleElementalDataTypes.get(ret);
         if(e != null) ret = e;
         
         return ret;
     }
     
-    private static Integer fetchDataType(String type, DeadlockClass pc) {
+    private static Integer fetchDataType(String type, MapleDeadlockClass pc) {
         List<Integer> compoundType = new LinkedList<>();
         String t = type;
         
         Integer ret = -2;
-        DeadlockClass targetClass;     //search for class data type
+        MapleDeadlockClass targetClass;     //search for class data type
         
         int idx = type.indexOf('[');
         int c = 0;
@@ -1121,23 +1121,23 @@ public class DeadlockReader extends JavaParserBaseListener {
         int en = type.indexOf('<');
         if(en != -1) t = type.substring(0, en);
         
-        if (IgnoredTypes.isDataTypeIgnored(t)) {
-            return BasicDataTypes.get("Object");
+        if (MapleIgnoredTypes.isDataTypeIgnored(t)) {
+            return mapleBasicDataTypes.get("Object");
         }
         
-        switch (DeadlockAbstractType.getValue(t)) {
+        switch (MapleDeadlockAbstractType.getValue(t)) {
             case LOCK:
-                return ElementalTypes[5];
+                return mapleElementalTypes[5];
                 
             case SCRIPT:
-                return ElementalTypes[6];
+                return mapleElementalTypes[6];
         }
         
         try {
             targetClass = pc.getImport(t);
             if (targetClass == null) {
-                String path = DeadlockStorage.getPublicPackageName(pc);
-                targetClass = PublicClasses.get(path).get(t);
+                String path = MapleDeadlockStorage.getPublicPackageName(pc);
+                targetClass = maplePublicClasses.get(path).get(t);
             }
         } catch(NullPointerException e) {
             if (pc != null) System.out.println("EXCEPTION ON " + t + " ON SRC " + pc.getPackageName() + pc.getPathName());
@@ -1149,31 +1149,31 @@ public class DeadlockReader extends JavaParserBaseListener {
             String nameChanged = "";
             if(c > 0) {
                 for(int i = 0; i <= c; i++) {
-                    ret = BasicDataTypes.get(targetClass.getPackageName() + targetClass.getName() + nameChanged);
+                    ret = mapleBasicDataTypes.get(targetClass.getPackageName() + targetClass.getName() + nameChanged);
                     if(ret == null) {
                         ret = runningTypeId.getAndIncrement();
-                        BasicDataTypes.put(targetClass.getPackageName() + targetClass.getName() + nameChanged, ret);
+                        mapleBasicDataTypes.put(targetClass.getPackageName() + targetClass.getName() + nameChanged, ret);
                     }
                     
                     nameChanged += "[]";
                 }
             }
 
-            ret = ClassDataTypes.get(targetClass);
+            ret = mapleClassDataTypes.get(targetClass);
             if(ret == null) {
                 ret = classId;
-                ClassDataTypes.put(targetClass, ret);
+                mapleClassDataTypes.put(targetClass, ret);
             }
             
             if(!compoundType.isEmpty()) {
                 compoundType.add(ret);
 
-                ret = CompoundDataTypes.get(compoundType);
+                ret = mapleCompoundDataTypes.get(compoundType);
                 if(ret == null) {
                     ret = runningTypeId.getAndIncrement();
-                    //CompoundDataNames.put(ret, type);
+                    //mapleCompoundDataNames.put(ret, type);
 
-                    CompoundDataTypes.put(compoundType, ret);
+                    mapleCompoundDataTypes.put(compoundType, ret);
                 }
             }
         } else if(c > 0) {
@@ -1181,21 +1181,21 @@ public class DeadlockReader extends JavaParserBaseListener {
                 t += "[]";
             }
 
-            ret = BasicDataTypes.get(t);
+            ret = mapleBasicDataTypes.get(t);
             if(ret == null) {
                 ret = runningTypeId.getAndIncrement();
-                BasicDataTypes.put(t, ret);
+                mapleBasicDataTypes.put(t, ret);
             }
         } else {
             if(!compoundType.isEmpty()) {
                 compoundType.add(ret);
 
-                ret = CompoundDataTypes.get(compoundType);
+                ret = mapleCompoundDataTypes.get(compoundType);
                 if(ret == null) {
                     ret = runningTypeId.getAndIncrement();
-                    //CompoundDataNames.put(ret, type);
+                    //mapleCompoundDataNames.put(ret, type);
                     
-                    CompoundDataTypes.put(compoundType, ret);
+                    mapleCompoundDataTypes.put(compoundType, ret);
                 }
             }
         }
@@ -1212,11 +1212,11 @@ public class DeadlockReader extends JavaParserBaseListener {
         String type = p.left;
         if(type.contentEquals("void")) return -2;
         
-        Integer ret = fetchDataType(type, DeadlockStorage.locateClass(p.right));
+        Integer ret = fetchDataType(type, MapleDeadlockStorage.locateClass(p.right));
         return ret;
     }
     
-    private static void updateFunctionReferences(DeadlockFunction f) {
+    private static void updateFunctionReferences(MapleDeadlockFunction f) {
         f.setReturn(parseDataType(f.getReturn()));
                     
         List<Integer> pList = f.getParameters();
@@ -1246,21 +1246,21 @@ public class DeadlockReader extends JavaParserBaseListener {
         }
     }
     
-    private static void updatePackageReferences(Map<String, Map<String, DeadlockClass>> packageClasses) {
-        for(Map<String, DeadlockClass> m : packageClasses.values()) {
-            for(DeadlockClass mdc : m.values()) {
+    private static void updatePackageReferences(Map<String, Map<String, MapleDeadlockClass>> packageClasses) {
+        for(Map<String, MapleDeadlockClass> m : packageClasses.values()) {
+            for(MapleDeadlockClass mdc : m.values()) {
                 for(Entry<String, Integer> e : mdc.getFieldVariables().entrySet()) {
                     mdc.updateFieldVariable(e.getKey(), parseDataType(e.getValue()));
                 }
                 
-                for(DeadlockFunction f : mdc.getMethods()) {
+                for(MapleDeadlockFunction f : mdc.getMethods()) {
                     updateFunctionReferences(f);
                 }
             }
         }
         
-        for(Map<String, DeadlockClass> m : packageClasses.values()) {
-            for(DeadlockClass mdc : m.values()) {
+        for(Map<String, MapleDeadlockClass> m : packageClasses.values()) {
+            for(MapleDeadlockClass mdc : m.values()) {
                 mdc.generateMaskedTypeSet();
             }
         }
@@ -1272,44 +1272,44 @@ public class DeadlockReader extends JavaParserBaseListener {
         instantiateElementalDataTypes();
         generateElementalDataTypes();
         
-        for(Map<String, DeadlockClass> m : PublicClasses.values()) {
-            for(DeadlockClass c : m.values()) {
-                ClassDataTypes.put(c, runningTypeId.getAndIncrement());
+        for(Map<String, MapleDeadlockClass> m : maplePublicClasses.values()) {
+            for(MapleDeadlockClass c : m.values()) {
+                mapleClassDataTypes.put(c, runningTypeId.getAndIncrement());
             }
         }
         
-        for(Map<String, DeadlockClass> m : PrivateClasses.values()) {
-            for(DeadlockClass c : m.values()) {
-                ClassDataTypes.put(c, runningTypeId.getAndIncrement());
+        for(Map<String, MapleDeadlockClass> m : maplePrivateClasses.values()) {
+            for(MapleDeadlockClass c : m.values()) {
+                mapleClassDataTypes.put(c, runningTypeId.getAndIncrement());
             }
         }
         
-        for(Entry<Integer, Pair<DeadlockClass, Integer>> e : volatileMaskedTypes.entrySet()) {
+        for(Entry<Integer, Pair<MapleDeadlockClass, Integer>> e : volatileMaskedTypes.entrySet()) {
             if(e != null) {
                 e.getValue().left.updateMaskedType(e.getValue().right, parseDataType(e.getKey()));
             }
         }
         
-        updatePackageReferences(PublicClasses);
-        updatePackageReferences(PrivateClasses);
+        updatePackageReferences(maplePublicClasses);
+        updatePackageReferences(maplePrivateClasses);
     }
     
     private static void linkElementalDataTypes(String link, String target) {
         Integer typeId = runningTypeId.getAndIncrement();
         
-        BasicDataTypes.put(link, typeId);
-        ElementalDataTypes.put(typeId, BasicDataTypes.get(target));
-        LinkedDataNames.put(typeId, target);
+        mapleBasicDataTypes.put(link, typeId);
+        mapleElementalDataTypes.put(typeId, mapleBasicDataTypes.get(target));
+        mapleLinkedDataNames.put(typeId, target);
     }
     
     private static void instantiateElementalDataType(String s) {
-        BasicDataTypes.put(s, runningTypeId.getAndIncrement());
+        mapleBasicDataTypes.put(s, runningTypeId.getAndIncrement());
     }
     
     private static void instantiateIgnoredDataTypes() {
         Integer start = runningTypeId.get();
         
-        for(String s : IgnoredTypes.getIgnoredTypes()) {
+        for(String s : MapleIgnoredTypes.getIgnoredTypes()) {
             instantiateElementalDataType(s);
         }
         
@@ -1317,16 +1317,16 @@ public class DeadlockReader extends JavaParserBaseListener {
     }
     
     private static void generateReflectedDataTypes() {
-        for(ReflectedTypes mrt : ReflectedTypes.getReflectedTypes()) {
-            Integer mrtId = BasicDataTypes.get(mrt.getName());
-            Integer mrtDefReturn = BasicDataTypes.get(mrt.getDefaultReturn());
+        for(MapleReflectedTypes mrt : MapleReflectedTypes.getReflectedTypes()) {
+            Integer mrtId = mapleBasicDataTypes.get(mrt.getName());
+            Integer mrtDefReturn = mapleBasicDataTypes.get(mrt.getDefaultReturn());
             Map<String, Integer> mrtMethods = new HashMap<>();
             
             for(Entry<String, String> emrt : mrt.getMethodReturns().entrySet()) {
-                mrtMethods.put(emrt.getKey(), BasicDataTypes.get(emrt.getValue()));
+                mrtMethods.put(emrt.getKey(), mapleBasicDataTypes.get(emrt.getValue()));
             }
             
-            ReflectedClasses.put(mrtId, new Pair<>(mrtDefReturn, mrtMethods));
+            mapleReflectedClasses.put(mrtId, new Pair<>(mrtDefReturn, mrtMethods));
         }
     }
     
@@ -1356,27 +1356,27 @@ public class DeadlockReader extends JavaParserBaseListener {
     }
     
     private static void generateElementalDataTypes() {
-        ElementalTypes[0] = BasicDataTypes.get("int");
-        ElementalTypes[1] = BasicDataTypes.get("int");    // float, but let numbers have the same data reference for the sake of simplicity
-        ElementalTypes[2] = BasicDataTypes.get("char");
-        ElementalTypes[3] = BasicDataTypes.get("String");
-        ElementalTypes[4] = BasicDataTypes.get("boolean");
-        ElementalTypes[5] = BasicDataTypes.get("Lock");
-        ElementalTypes[6] = BasicDataTypes.get("Invocable");
-        ElementalTypes[7] = BasicDataTypes.get("null");
+        mapleElementalTypes[0] = mapleBasicDataTypes.get("int");
+        mapleElementalTypes[1] = mapleBasicDataTypes.get("int");    // float, but let numbers have the same data reference for the sake of simplicity
+        mapleElementalTypes[2] = mapleBasicDataTypes.get("char");
+        mapleElementalTypes[3] = mapleBasicDataTypes.get("String");
+        mapleElementalTypes[4] = mapleBasicDataTypes.get("boolean");
+        mapleElementalTypes[5] = mapleBasicDataTypes.get("Lock");
+        mapleElementalTypes[6] = mapleBasicDataTypes.get("Invocable");
+        mapleElementalTypes[7] = mapleBasicDataTypes.get("null");
         
-        for(Pair<String, String> p : LinkedTypes.getLinkedTypes()) {
+        for(Pair<String, String> p : MapleLinkedTypes.getLinkedTypes()) {
             linkElementalDataTypes(p.left, p.right);
         }
     }
     
     private static void generateDereferencedDataTypes() {
-        for(Entry<String, Integer> e : BasicDataTypes.entrySet()) {
+        for(Entry<String, Integer> e : mapleBasicDataTypes.entrySet()) {
             String s = e.getKey();
             
             int c = countOccurrences(s, '[');
             if(c > 0) {
-                DeadlockClass targetClass = DeadlockStorage.locatePublicClass(s.substring(0, s.indexOf('[')), null);
+                MapleDeadlockClass targetClass = MapleDeadlockStorage.locatePublicClass(s.substring(0, s.indexOf('[')), null);
                 if (targetClass != null) {
                     String nameChanged = "";
                     for(int i = 0; i < c; i++) {
@@ -1384,17 +1384,17 @@ public class DeadlockReader extends JavaParserBaseListener {
                     }
 
                     if(nameChanged.length() > 0) {
-                        Integer i = BasicDataTypes.get(targetClass.getPackageName() + targetClass.getName() + nameChanged);
+                        Integer i = mapleBasicDataTypes.get(targetClass.getPackageName() + targetClass.getName() + nameChanged);
                         if(i == null) {
                             i = runningTypeId.getAndIncrement();
-                            BasicDataTypes.put(targetClass.getPackageName() + targetClass.getName() + nameChanged, i);
+                            mapleBasicDataTypes.put(targetClass.getPackageName() + targetClass.getName() + nameChanged, i);
                         }
                     }
                 } else {
-                    Integer i = BasicDataTypes.get(s);
+                    Integer i = mapleBasicDataTypes.get(s);
                     if(i == null) {
                         i = runningTypeId.getAndIncrement();
-                        BasicDataTypes.put(s, i);
+                        mapleBasicDataTypes.put(s, i);
                     }
                 }
             }
@@ -1402,13 +1402,13 @@ public class DeadlockReader extends JavaParserBaseListener {
     }
     
     public static void solveRunnableFunctions() {
-        for(Entry<DeadlockFunction, Boolean> runMdf : RunnableFunctions.entrySet()) {
-            DeadlockFunction mdf = runMdf.getKey();
+        for(Entry<MapleDeadlockFunction, Boolean> runMdf : mapleRunnableFunctions.entrySet()) {
+            MapleDeadlockFunction mdf = runMdf.getKey();
             updateFunctionReferences(mdf);
             
-            DeadlockClass mdc = mdf.getSourceClass();
+            MapleDeadlockClass mdc = mdf.getSourceClass();
             if(runMdf.getValue() || mdc.getSuperNameList().contains("Runnable")) {
-                RunnableMethods.add(mdf);
+                mapleRunnableMethods.add(mdf);
             }
             
             mdc.addClassMethod(mdf);
@@ -1416,32 +1416,32 @@ public class DeadlockReader extends JavaParserBaseListener {
     }
     
     private static void referenceCustomClasses() {
-        for (DeadlockClass c : customClasses) {
-            DeadlockClass sup = DeadlockStorage.locateClass(c.getName(), c);
+        for (MapleDeadlockClass c : customClasses) {
+            MapleDeadlockClass sup = MapleDeadlockStorage.locateClass(c.getName(), c);
             c.addSuper(sup);
         }
         customClasses.clear();
     }
     
     private static void referenceReadWriteLocks() {
-        for (Entry<String, DeadlockLock> e : ReadWriteLocks.entrySet()) {
-            Locks.put(e.getKey(), e.getValue());
+        for (Entry<String, MapleDeadlockLock> e : mapleReadWriteLocks.entrySet()) {
+            mapleLocks.put(e.getKey(), e.getValue());
         }
     }
     
-    public static DeadlockStorage compileProjectData() {
+    public static MapleDeadlockStorage compileProjectData() {
         //System.out.println(storage);
         
         parseImportClasses();
         
-        parseSuperClasses(PublicClasses);
-        parseSuperClasses(PrivateClasses);
+        parseSuperClasses(maplePublicClasses);
+        parseSuperClasses(maplePrivateClasses);
         
-        Map<String, Map<String, DeadlockClass>> m = new HashMap<>();
-        Map<String, DeadlockClass> n = new HashMap<>();
+        Map<String, Map<String, MapleDeadlockClass>> m = new HashMap<>();
+        Map<String, MapleDeadlockClass> n = new HashMap<>();
         
         m.put("", n);
-        for(DeadlockClass c : customClasses) {
+        for(MapleDeadlockClass c : customClasses) {
             n.put(c.getName(), c);
         }
         parseSuperClasses(m);
@@ -1454,8 +1454,8 @@ public class DeadlockReader extends JavaParserBaseListener {
             System.out.println(v.getKey() + " : " + v.getValue());
         }
         
-        for(Map<String, DeadlockClass> m : PublicClasses.values()) {
-            for(DeadlockClass mdc : m.values()) {
+        for(Map<String, MapleDeadlockClass> m : maplePublicClasses.values()) {
+            for(MapleDeadlockClass mdc : m.values()) {
                 System.out.println(mdc);
             }
         }

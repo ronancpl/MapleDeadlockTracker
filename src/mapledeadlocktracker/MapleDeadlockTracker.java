@@ -1,5 +1,5 @@
 /*
-    This file is part of the DeadlockTracker detection tool
+    This file is part of the MapleDeadlockTracker detection tool
     Copyleft (L) 2025 RonanLana
 
     GNU General Public License v3.0
@@ -9,18 +9,10 @@
     work, under the same license. Copyright and license notices must be preserved. Contributors
     provide an express grant of patent rights.
 */
-package deadlocktracker;
+package mapledeadlocktracker;
 
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.Mojo;
-
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.*;
-
-import deadlocktracker.containers.DeadlockEntry;
-import deadlocktracker.containers.DeadlockLock;
-import deadlocktracker.containers.DeadlockStorage;
+import mapledeadlocktracker.containers.MapleDeadlockEntry;
+import mapledeadlocktracker.containers.MapleDeadlockStorage;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -31,16 +23,20 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.tree.*;
+
 import javalexer.*;
 import javaparser.*;
+import mapledeadlocktracker.containers.MapleDeadlockLock;
 
 /**
  *
  * @author RonanLana
  */
-public class DeadlockTracker {
+public class MapleDeadlockTracker {
 
-    private static void parseJavaFile(String fileName, DeadlockReader listener) {
+    private static void parseJavaFile(String fileName, MapleDeadlockReader listener) {
         try {
             JavaLexer lexer = new JavaLexer(CharStreams.fromFileName(fileName));
             CommonTokenStream commonTokenStream = new CommonTokenStream(lexer);
@@ -71,11 +67,11 @@ public class DeadlockTracker {
         }
     }
     
-    private static DeadlockStorage parseJavaProject(String directoryName) {
+    private static MapleDeadlockStorage parseJavaProject(String directoryName) {
         List<String> fileNames = new ArrayList<>();
         listJavaFiles(directoryName, fileNames);
         
-        DeadlockReader reader = new DeadlockReader();
+        MapleDeadlockReader reader = new MapleDeadlockReader();
         
         for(String fName : fileNames) {
             System.out.println("Parsing '" + fName + "'");
@@ -83,7 +79,7 @@ public class DeadlockTracker {
         }
         System.out.println("Project file reading complete!\n");
         
-        return DeadlockReader.compileProjectData();     // finally, updates the storage table with relevant associations
+        return MapleDeadlockReader.compileProjectData();     // finally, updates the storage table with relevant associations
     }
     
     private static void loadPropertiesFile() {
@@ -95,46 +91,34 @@ public class DeadlockTracker {
             ex.printStackTrace();
         }
         
-        DeadlockConfig.loadProperties(prop);
+        MapleDeadlockConfig.loadProperties(prop);
     }
     
     private static Map<Integer, String> getGraphLockNames() {
         Map<Integer, String> r = new HashMap<>();
         
-        Map<String, DeadlockLock> m = DeadlockGraphMaker.getGraphLocks();
-        for (Entry<String, DeadlockLock> em : m.entrySet()) {
+        Map<String, MapleDeadlockLock> m = MapleDeadlockGraphMaker.getGraphLocks();
+        for (Entry<String, MapleDeadlockLock> em : m.entrySet()) {
             if(em.getValue() != null) r.put(em.getValue().getId(), em.getKey());
         }
         
         return r;
     }
     
-    private static void executeDeadlockTracker() {
+    public static void main(String[] args) {
         loadPropertiesFile();
         
-        DeadlockStorage md = parseJavaProject(DeadlockConfig.getProperty("src_folder"));
+        MapleDeadlockStorage md = parseJavaProject(MapleDeadlockConfig.getProperty("src_folder"));
         System.out.println("Project parse complete!\n");
         
-        DeadlockGraph mdg = DeadlockGraphMaker.generateSourceGraph(md);
+        MapleDeadlockGraph mdg = MapleDeadlockGraphMaker.generateSourceGraph(md);
         System.out.println("Project graph generated!\n");
         
         Map<Integer, String> r = getGraphLockNames();
-        Set<DeadlockEntry> mds = new DeadlockGraphCruiser().runSourceGraph(mdg, r);
-        DeadlockGraphResult.reportDeadlocks(mds, r);
+        Set<MapleDeadlockEntry> mds = new MapleDeadlockGraphCruiser().runSourceGraph(mdg, r);
+        MapleDeadlockGraphResult.reportDeadlocks(mds, r);
         
-        //DeadlockGraphMaker.dumpGraph();
+        //MapleDeadlockGraphMaker.dumpGraph();
         
-    }
-    
-    @Mojo(name = "DeadlockTracker")
-    public class DeadlockTrackerMojo extends AbstractMojo {
-        @Override
-        public void execute() throws MojoExecutionException {
-            executeDeadlockTracker();
-        }
-    }
-    
-    public static void main(String[] args) {
-        executeDeadlockTracker();
     }
 }
