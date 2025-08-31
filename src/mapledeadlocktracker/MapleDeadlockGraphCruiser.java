@@ -187,7 +187,7 @@ public class MapleDeadlockGraphCruiser {
         int size = s.size();
         s.addAll(uptrace.acquiredLocks);
         
-        if (true) {
+        if (s.size() > size || s.size() == 0) {
             int curBaseIdx = functionStack.size();
             functionStack.add(f);
             
