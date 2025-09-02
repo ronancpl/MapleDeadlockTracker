@@ -19,6 +19,7 @@ nbproject/
 
 # Package Files #
 *.jar
+!lib/antlr4-runtime-4.7.1.jar
 *.war
 *.nar
 *.ear
