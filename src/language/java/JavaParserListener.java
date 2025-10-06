@@ -1,5 +1,5 @@
 // Generated from JavaParser.g4 by ANTLR 4.7.1
-package javaparser;
+package language.java;
 
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 

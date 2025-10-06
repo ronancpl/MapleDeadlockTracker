@@ -8,6 +8,9 @@ nbproject/
 # Compiled class file
 *.class
 
+# Compiled other file
+/lib/_dist/
+
 # Log file
 *.log
 

@@ -1,5 +1,5 @@
 // Generated from JavaLexer.g4 by ANTLR 4.7.1
-package javalexer;
+package language.java;
 
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
