@@ -46,7 +46,7 @@ public class MapleDeadlockGraphCruiser {
 		Set<Integer> acquiredLocks = new HashSet<>();
 		List<Integer> seqLocks = new LinkedList<>();
 		List<Integer> seqAcqLocks = new ArrayList<>();
-                List<Integer> seqIntAcqLocks;
+                List<Integer> seqIntAcqLocks = Collections.emptyList();
                 Integer startAt;
 
 	}
@@ -206,7 +206,8 @@ public class MapleDeadlockGraphCruiser {
 					functionStack.add(mdf);
 					insertGraphFunction(mdf);
 
-					FunctionPathNode ftrace = new FunctionPathNode();
+                                        
+                                        FunctionPathNode ftrace = new FunctionPathNode();
 					ftrace.seqLocks.addAll(uptrace.seqLocks);
                                         ftrace.startAt = ftrace.seqLocks.size();
 
@@ -280,17 +281,19 @@ public class MapleDeadlockGraphCruiser {
 	}
 
 	private void incrementLockInFunction(Integer i, Integer k, MapleDeadlockFunction nf) {
-		Map<Integer, FunctionLockElement> locks = lockDependencies.get(i);
+		if(functionMilestones.get(nf).contains(k)) return;
+            
+                Map<Integer, FunctionLockElement> locks = lockDependencies.get(i);
 		if (locks == null) {
 			locks = new HashMap<>();
 			lockDependencies.put(i, locks);
 		}
-
-		if (locks.containsKey(k)) {
-			locks.get(k).increment();
-		} else {
-			locks.put(k, new FunctionLockElement(k, nf));
-		}
+                
+                if (locks.containsKey(k)) {
+                        locks.get(k).increment();
+                } else {
+                        locks.put(k, new FunctionLockElement(k, nf));
+                }
 	}
 
 	private void decrementLockInFunction(Integer i, Integer k) {
@@ -306,35 +309,38 @@ public class MapleDeadlockGraphCruiser {
 	}
 
 	private void fetchLockDependenciesInFunction(MapleDeadlockFunction f, MapleDeadlockFunction nf, FunctionPathNode n) {
-		List<Integer> fl = functionLocks.get(f).seqAcqLocks;
-		for (int a = 0; a < fl.size(); a++) {
+		List<Integer> fl = functionLocks.get(f).seqIntAcqLocks;
+                Set<Integer> locks = new HashSet<>();
+		for (int a = functionLocks.get(f).startAt; a < fl.size(); a++) {
 			Integer i = fl.get(a);  // lockId
 			if (i > 0) {
-				incrementLockInFunction(i, i, nf);
-
-				int j = fetchUnlockIndex(fl, i, a + 1, fl.size());
-				for (int h = a + 1; h < j; h++) {
-					Integer k = fl.get(h);
-					if (k > 0) {
-						int c = fetchUnlockIndex(fl, k, h, fl.size());
-						if (c > j) {
-							for (int m = h; m < j; m++) {
-								Integer g = fl.get(m);
-								if (g > 0) {
-									incrementLockInFunction(i, g, nf);
-								} else if (g < 0) {
-									decrementLockInFunction(i, g);
-								}
-							}
-						}
-					}
-				}
+                                incrementLockInFunction(i, i, nf);
+                                
+                                int j = fetchUnlockIndex(fl, i, a + 1, fl.size());
+                                for (int h = a + 1; h < j; h++) {
+                                        Integer k = fl.get(h);
+                                        if (k > 0 && !locks.contains(k)) {
+                                                int c = fetchUnlockIndex(fl, k, h, fl.size());
+                                                if (c > j) {
+                                                        for (int m = h; m < j; m++) {
+                                                                Integer g = fl.get(m);
+                                                                if (g > 0) {
+                                                                        incrementLockInFunction(i, g, nf);
+                                                                } else if (g < 0) {
+                                                                        decrementLockInFunction(i, g);
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                }
+                                
+                                locks.add(i);
 			} else if (i < 0) {
 				decrementLockInFunction(-i, -i);
 			}
 		}
 	}
-
+        
 	private void fetchLockDependencies() {
 		Set<MapleDeadlockFunction> r = new HashSet<>();
 
@@ -366,7 +372,7 @@ public class MapleDeadlockGraphCruiser {
 	private static void makeRemissiveIndexLockFunctions() {
 		Set<Integer> acqLocks = new HashSet<>();
 		for (FunctionPathNode n : functionLocks.values()) {
-			for (Integer l : n.seqAcqLocks) {
+			for (Integer l : n.seqIntAcqLocks) {
 				if (l > 0) {
 					acqLocks.add(l);
 				}
@@ -378,7 +384,7 @@ public class MapleDeadlockGraphCruiser {
 		}
 
 		for (Entry<MapleDeadlockFunction, FunctionPathNode> e : functionLocks.entrySet()) {
-			for (Integer i : e.getValue().seqAcqLocks) {
+			for (Integer i : e.getValue().seqIntAcqLocks) {
 				if (i > 0) lockFunctions.get(i).add(e.getKey());
 			}
 		}
@@ -461,7 +467,6 @@ public class MapleDeadlockGraphCruiser {
                                 }
                         }
 		}
-		System.out.println();
                 
                 for (MapleDeadlockFunction f : functions) {
                         System.out.println(f + " : " + functionLocks.get(f).seqIntAcqLocks + "," + functionMilestones.get(f));

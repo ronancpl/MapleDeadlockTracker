@@ -47,6 +47,7 @@ public class MapleDeadlockGraphResult {
 			locks.add(e.getLockId2());
 		}
 
+                System.out.println();
 		System.out.println("List of deadlocks:");
 		for (Integer i : locks) {
 			System.out.println(mapleLockNames.get(i));
