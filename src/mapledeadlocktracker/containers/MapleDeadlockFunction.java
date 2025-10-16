@@ -304,20 +304,6 @@ public class MapleDeadlockFunction {
 
 	@Override
 	public String toString() {
-		String s = "\t\t" + name + " : ";
-		
-                for(Integer i: paramTypes) {
-                        s += (i + ", ");
-                }
-
-                s += "\n\t\t\t";
-
-		for(ParserRuleContext e : methodCalls) {
-			s += (e.getText() + ", ");
-		}
-
-		s += "\n";
-
-		return s;
+		return MapleDeadlockStorage.getCanonClassName(this.getSourceClass()) + " >> " + this.getName();
 	}
 }

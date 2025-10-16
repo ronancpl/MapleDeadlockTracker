@@ -42,11 +42,6 @@ public enum MapleDeadlockAbstractType {
 	}
 
 	public static MapleDeadlockAbstractType getValue(String typeName) {
-		/*
-        System.out.print("testing ABST " + typeName + " ");
-        String t = typeName.split("<", 1)[0];
-		 */
-
 		int idx = typeName.lastIndexOf('.');
 		if(idx > -1) typeName = typeName.substring(idx + 1);  // removing the package part of the type declaration
 		typeName = MapleLinkedTypes.getLinkedType(typeName);

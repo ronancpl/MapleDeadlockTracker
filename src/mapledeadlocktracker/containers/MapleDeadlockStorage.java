@@ -419,7 +419,8 @@ public class MapleDeadlockStorage {
 		return h;
 	}
 
-	private static String dumpCachedImports() {
+	/*
+        private static String dumpCachedImports() {
 		String s = "--------\n PUBLIC IMPORTS:\n";
 		for(Entry<String, Map<String, MapleDeadlockClass>> m : maplePublicClasses.entrySet()) {
 			s += ("\nPACKAGE " + m.getKey() + "\n");
@@ -433,6 +434,7 @@ public class MapleDeadlockStorage {
 
 		return s;
 	}
+        */
 
 	private static String dumpCachedPackages() {
 		String s = "--------\n PUBLIC:\n";
@@ -458,7 +460,7 @@ public class MapleDeadlockStorage {
 	public String toString() {
 		String s = "";
 
-		s += dumpCachedPackages() + "\n" + dumpCachedImports();
+		s += dumpCachedPackages() + "\n";// + dumpCachedImports();
 
 		s += "--------\n LOCKS:\n";
 		for(Map.Entry<String, MapleDeadlockLock> l : mapleLocks.entrySet()) {

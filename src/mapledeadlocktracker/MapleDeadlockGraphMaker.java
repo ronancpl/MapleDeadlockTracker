@@ -1242,7 +1242,7 @@ public abstract class MapleDeadlockGraphMaker {
 			List<MapleDeadlockGraphEntry> list = e.right.right.getEntryList();
 
 			if(list.size() > 0) {
-				System.out.println(MapleDeadlockStorage.getCanonClassName(e.right.left.getSourceClass()) + " >> " + e.right.left.getName() + " id: " + e.left);
+				System.out.println(e.right.left + " id: " + e.left);
 				for(MapleDeadlockGraphEntry n : list) {
 					System.out.print(n.getGraphEntryPoints() + " ");
 				}

@@ -13,6 +13,7 @@ package mapledeadlocktracker;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -45,6 +46,8 @@ public class MapleDeadlockGraphCruiser {
 		Set<Integer> acquiredLocks = new HashSet<>();
 		List<Integer> seqLocks = new LinkedList<>();
 		List<Integer> seqAcqLocks = new ArrayList<>();
+                List<Integer> seqIntAcqLocks;
+                Integer startAt;
 
 	}
 
@@ -124,6 +127,12 @@ public class MapleDeadlockGraphCruiser {
 
 			acqLocks.clear();
 			acqLocks.addAll(trace.seqAcqLocks);
+                        
+                        if (uptrace.startAt < acqLocks.size()) {
+                                functionLocks.get(f).seqIntAcqLocks = acqLocks.subList(uptrace.startAt, acqLocks.size());
+                        } else {
+                                functionLocks.get(f).seqIntAcqLocks = Collections.emptyList();
+                        }
 		}
 
 		List<Integer> list = new ArrayList<>(trace.seqLocks);
@@ -199,6 +208,7 @@ public class MapleDeadlockGraphCruiser {
 
 					FunctionPathNode ftrace = new FunctionPathNode();
 					ftrace.seqLocks.addAll(uptrace.seqLocks);
+                                        ftrace.startAt = ftrace.seqLocks.size();
 
 					for (MapleDeadlockGraphEntry e : g.get(mdf).getEntryList()) {
 						for (MapleDeadlockGraphNode n : e.getGraphEntryPoints()) {
@@ -253,6 +263,7 @@ public class MapleDeadlockGraphCruiser {
                         if (isStartingFunction(f) || runMethods.contains(f)) {
 				//System.out.println("Reading " + MapleDeadlockStorage.getCanonClassName(f.getSourceClass()) + " >> " + f.getName());
 				FunctionPathNode trace = new FunctionPathNode();
+                                trace.startAt = 0;
 				runSourceGraphFunction(f, functionGraph, trace);
 			}
 		}
@@ -394,16 +405,18 @@ public class MapleDeadlockGraphCruiser {
 		}
 	}
 
-	private void detectDeadlocks(Map<Integer, String> LockNames) {
+	private void detectDeadlocks(Map<Integer, String> mapleLockNames) {
 		fetchLockDependencies();
-		dumpLockDependency(LockNames);
+		dumpLockDependency(mapleLockNames);
 		makeRemissiveIndexLockFunctions();
 		detectDeadlocksInLockDependencies();
+                dumpDeadlockFunctions(mapleLockNames);
 	}
 
 	private void createFunctionAcquiredLocks(MapleDeadlockGraph graph) {
 		for(MapleDeadlockFunction f : graph.getFunctionIds().keySet()) {
 			FunctionPathNode ftrace = new FunctionPathNode();
+                        ftrace.startAt = 0;
 			functionLocks.put(f, ftrace);
 		}
 	}
@@ -423,13 +436,44 @@ public class MapleDeadlockGraphCruiser {
 		}
 		System.out.println();
 	}
+        
+        private static void dumpDeadlockFunctions(Map<Integer, String> mapleLockNames) {
+                System.out.println();
+                
+                Set<Integer> locks = new HashSet<>();
+                for (MapleDeadlockEntry e : deadlocks) {
+                        locks.add(e.getLockId1());
+                        locks.add(e.getLockId2());
+                }
+                
+                System.out.println("Dead Lock ids:");
+                for (Integer i : locks) {
+                        System.out.println(mapleLockNames.get(i) + ":" + i);
+                }
+                System.out.println();
+                
+                System.out.println("Function acquired Locks:");
+                Set<MapleDeadlockFunction> functions = new HashSet<>();
+		for (Entry<MapleDeadlockFunction, FunctionPathNode> e : functionLocks.entrySet()) {
+                        for (Integer i : locks) {
+                                if (e.getValue().acquiredLocks.contains(i)) {
+                                        functions.add(e.getKey());
+                                }
+                        }
+		}
+		System.out.println();
+                
+                for (MapleDeadlockFunction f : functions) {
+                        System.out.println(f + " : " + functionLocks.get(f).seqIntAcqLocks + "," + functionMilestones.get(f));
+                }
+	}
 
-	public Set<MapleDeadlockEntry> runSourceGraph(MapleDeadlockGraph graph, MapleDeadlockStorage storage, Map<Integer, String> LockNames) {
+	public Set<MapleDeadlockEntry> runSourceGraph(MapleDeadlockGraph graph, MapleDeadlockStorage storage, Map<Integer, String> mapleLockNames) {
 		createFunctionAcquiredLocks(graph);
 		makeRemissiveIndexFunctions(graph);
 		findFunctionLocks(graph, storage);
 
-		detectDeadlocks(LockNames);
+		detectDeadlocks(mapleLockNames);
 		return deadlocks;
 	}
 }

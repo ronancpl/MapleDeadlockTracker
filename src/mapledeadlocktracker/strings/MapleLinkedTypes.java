@@ -74,6 +74,12 @@ public class MapleLinkedTypes {
 		instantiateDataLink("ReadWriteLock", "Lock");
 		instantiateDataLink("ReadLock", "Lock");
 		instantiateDataLink("WriteLock", "Lock");
+                
+                instantiateDataLink("MonitoredReentrantReadWriteLock", "Lock");
+		instantiateDataLink("MonitoredReentrantLock", "Lock");
+		instantiateDataLink("MonitoredReadWriteLock", "Lock");
+		instantiateDataLink("MonitoredReadLock", "Lock");
+		instantiateDataLink("MonitoredWriteLock", "Lock");
 
 		instantiateDataLink("NashornScriptEngine", "Invocable");
 	}

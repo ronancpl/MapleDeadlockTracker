@@ -131,8 +131,7 @@ public class MapleDeadlockTracker {
 		Set<MapleDeadlockEntry> mds = new MapleDeadlockGraphCruiser().runSourceGraph(mdg, md, r);
 		MapleDeadlockGraphResult.reportDeadlocks(mds, r);
                 
-		//DeadlockGraphMaker.dumpGraph();
-
+		//g.dumpGraph();
 	}
 
 	public static void main(String[] args) {

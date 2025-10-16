@@ -644,9 +644,9 @@ public class CSharpReader extends CSharpParserBaseListener {
 
 		if(!readLockWaitingSet.isEmpty() || !writeLockWaitingSet.isEmpty()) {
 			if(readLockWaitingSet.contains(lockName)) {
-				processLock(currentClass, "ReadLock1", elementName, value);
+				processLock(currentClass, "ReadLock1", elementName, elementName);
 			} else if(writeLockWaitingSet.contains(lockName)) {
-				processLock(currentClass, "WriteLock1", elementName, value);
+				processLock(currentClass, "WriteLock1", elementName, elementName);
 			}
 		}
 	}

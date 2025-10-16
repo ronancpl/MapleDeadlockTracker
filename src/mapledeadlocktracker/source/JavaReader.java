@@ -571,9 +571,9 @@ public class JavaReader extends JavaParserBaseListener {
 
 		if(!readLockWaitingSet.isEmpty() || !writeLockWaitingSet.isEmpty()) {
 			if(readLockWaitingSet.contains(lockName)) {
-				processLock("ReadLock1", ctx.IDENTIFIER().getText(), captureInitializer(ctx.elementValue().expression()));
+				processLock("ReadLock1", ctx.IDENTIFIER().getText(), captureLockName(ctx.elementValue().expression()));
 			} else if(writeLockWaitingSet.contains(lockName)) {
-				processLock("WriteLock1", ctx.IDENTIFIER().getText(), captureInitializer(ctx.elementValue().expression()));
+				processLock("WriteLock1", ctx.IDENTIFIER().getText(), captureLockName(ctx.elementValue().expression()));
 			}
 		}
 	}
@@ -608,7 +608,7 @@ public class JavaReader extends JavaParserBaseListener {
 			processLock(syncLockTypeName, syncLockName, "");   // create a lock representation of the synchronized modifier
 			methodStack.peek().addMethodCall(generateSyncLockExpression(syncLockName, true));
 		} else {
-			Pair<String, String> lockData = captureLockNameAndReference(ctx.expression(0));
+                        Pair<String, String> lockData = captureLockNameAndReference(ctx.expression(0));
 
 			if(lockData != null) {
 				String refName = currentPackageName + currentClass.getPathName() + "." + lockData.right;
@@ -785,7 +785,7 @@ public class JavaReader extends JavaParserBaseListener {
 
 				JavaParser.VariableInitializerContext vi = vd.variableInitializer();
 				if(vi != null) {
-					refLock = captureInitializer(vi.expression());
+					refLock = captureLockName(vi.expression());
 				}
 
 				processLock(typeText, vd.variableDeclaratorId().getText(), refLock);
@@ -805,7 +805,7 @@ public class JavaReader extends JavaParserBaseListener {
 
 			if(c1 != null && c2 != null) {
 				if(c2.getText().contains("Lock(")) {     // this is a lock initializer
-					reference = captureInitializer(c2);
+					reference = captureLockName(c2);
 
 					if(c1.primary() != null) {
 						name = c1.primary().IDENTIFIER().getText();
@@ -825,13 +825,17 @@ public class JavaReader extends JavaParserBaseListener {
 		return null;
 	}
 
-	private static String captureInitializer(JavaParser.ExpressionContext expr) {
+	private static String captureLockName(JavaParser.ExpressionContext expr) {
 		if(expr.getChildCount() > 2 && expr.getChild(2) instanceof JavaParser.MethodCallContext) {
-			expr = (JavaParser.ExpressionContext) expr.getChild(0);
-
+			JavaParser.MethodCallContext methodArg = (JavaParser.MethodCallContext) expr.getChild(2);
+			if(methodArg.expressionList() != null && !methodArg.expressionList().isEmpty()) {
+				return methodArg.expressionList().getText();
+			}
+                        
+                        expr = (JavaParser.ExpressionContext) expr.getChild(0);
 			if(expr.primary() != null) {
 				return expr.primary().IDENTIFIER().getText();
-			}
+                        }
 		}
 
 		return "";
@@ -840,10 +844,12 @@ public class JavaReader extends JavaParserBaseListener {
 	private static void processLock(String typeText, String name, String reference) {
 		boolean isRead = typeText.contains("Read");
 		boolean isWrite = typeText.contains("Write");
-
-		String lockName = MapleDeadlockStorage.getCanonClassName(currentClass) + "." + name;
+                
+                if (reference == null) reference = name;
+                
+                String lockName = MapleDeadlockStorage.getCanonClassName(currentClass) + "." + name;
 		String  refName = MapleDeadlockStorage.getCanonClassName(currentClass) + "." + reference;
-
+                
 		//System.out.println("Parsing lock : '" + typeText + "' name: '" + lockName + "' ref: '" + refName + "'");
 
 		if(isRead && isWrite) {
@@ -1098,11 +1104,7 @@ public class JavaReader extends JavaParserBaseListener {
 		Integer ret = -2;
 		MapleDeadlockClass targetClass;     //search for class data type
                 
-                if (type.contains("Pair")) {
-                    int i = 0;
-                }
-
-		int idx = type.indexOf('[');
+                int idx = type.indexOf('[');
 		int c = 0;
 		if(idx == -1) {
 			List<String> wrapped = getWrappedTypes(type);
@@ -1434,8 +1436,6 @@ public class JavaReader extends JavaParserBaseListener {
 	}
 
 	public static MapleDeadlockStorage compileProjectData() {
-		//System.out.println(storage);
-
 		parseImportClasses();
 
 		parseSuperClasses(maplePublicClasses);

@@ -39,7 +39,7 @@ public class MapleDeadlockGraphResult {
 		return deadlocks;
 	}
 
-	public static void reportDeadlocks(Set<MapleDeadlockEntry> deadlocksSet, Map<Integer, String> LockNames) {
+	public static void reportDeadlocks(Set<MapleDeadlockEntry> deadlocksSet, Map<Integer, String> mapleLockNames) {
 		List<MapleDeadlockEntry> deadlocks = sortDeadlockEntries(deadlocksSet);
 		Set<Integer> locks = new HashSet<>();
 		for (MapleDeadlockEntry e : deadlocks) {
@@ -49,7 +49,7 @@ public class MapleDeadlockGraphResult {
 
 		System.out.println("List of deadlocks:");
 		for (Integer i : locks) {
-			System.out.println(LockNames.get(i));
+			System.out.println(mapleLockNames.get(i));
 		}
 	}
 
